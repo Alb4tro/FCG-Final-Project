@@ -29,9 +29,6 @@ ADD_SUBDIRECTORY(openexr/IlmBase)
 #	cmake_policy(POP)
 #endif()
 
-
-message(WARNING "il path che cerco: ${CMAKE_CURRENT_BINBAY_DIR}/openexr/OpenEXR/IlmImf")
-
 TARGET_INCLUDE_DIRECTORIES(Half INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/openexr/IlmBase/Half)
 TARGET_INCLUDE_DIRECTORIES(IlmThread INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/openexr/IlmBase/IlmThread)
 TARGET_INCLUDE_DIRECTORIES(IlmThread INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/openexr/IlmBase/config)

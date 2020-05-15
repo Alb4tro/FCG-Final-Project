@@ -16,6 +16,7 @@
 
 SET(target_name ${lib_bcd_core})
 
+message(warning "eccolo quaaaa ${lib_bcd_core}")
 
 # First we check whether optional and required libraries have been found
 

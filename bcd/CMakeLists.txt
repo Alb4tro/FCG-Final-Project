@@ -99,7 +99,7 @@ ENDIF(BCD_USE_CUDA)
 #SET(CMAKE_VERBOSE_MAKEFILE ON)
 
 
-SET(bcd_include_folder "${CMAKE_SOURCE_DIR}/bcd/include/bcd")
+SET(bcd_include_folder "${CMAKE_CURRENT_SOURCE_DIR}/include/bcd")
 
 
 #MESSAGE(STATUS "Entering subdirectory 'ext'")
@@ -109,4 +109,4 @@ ADD_SUBDIRECTORY(ext)
 ADD_SUBDIRECTORY(src)
 
 #INCLUDE(CPack)
-
+#add_library(bcd STATIC src/cli/main.cpp) 

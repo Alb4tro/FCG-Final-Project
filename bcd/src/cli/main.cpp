@@ -23,7 +23,7 @@
 #include "Chronometer.h"
 #include "Utils.h"
 
-#include <Eigen/Dense>
+//#include <Eigen/Dense>
 
 #include <iostream>
 #include <ctime>

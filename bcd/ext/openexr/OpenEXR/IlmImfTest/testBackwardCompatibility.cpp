@@ -71,7 +71,6 @@
 #include <assert.h>
 #include <time.h>
 #ifndef WIN32
-#include <sys/times.h>
 #endif // WIN32
 
 #ifndef ILM_IMF_TEST_IMAGEDIR

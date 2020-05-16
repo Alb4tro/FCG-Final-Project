@@ -209,79 +209,42 @@ namespace bcd
 		srand(static_cast<unsigned int>(time(0)));
 	}
 
-  bool parseProgramArguments_bcd(int argc, const char** argv, ProgramArguments_bcd& o_rProgramArguments)
+  bool parseProgramArguments_bcd(string outputPath, const char *inputColorPath, const char *inputHistPath, 
+    const char *inputCovariancePath, ProgramArguments_bcd& o_rProgramArguments, std::string& error)
 	{
-		int argIndex = 0;
-		bool missingColor = true, missingHist = true, missingCov = true, missingOutput = true;
-		string inputColorFilePath;
-		while (++argIndex < argc)
-		{
-			if (strcmp(argv[argIndex], "-o") == 0)
-			{
-				argIndex++;
-				if (argIndex == argc)
-				{
-					cout << "ERROR in program arguments: expecting file path to the output image after '-o'" << endl;
-					return false;
-				}
-				o_rProgramArguments.m_denoisedOutputFilePath = string(argv[argIndex]);
-				ofstream outputFile(o_rProgramArguments.m_denoisedOutputFilePath, ofstream::out | ofstream::app);
-				if(!outputFile)
-				{
-					cout << "ERROR in program arguments: cannot write output file '" << o_rProgramArguments.m_denoisedOutputFilePath << "'" << endl;
-					return false;
-				}
-				missingOutput = false;
-			}
-			else if (strcmp(argv[argIndex], "-i") == 0)
-			{
-				argIndex++;
-				if (argIndex == argc)
-				{
-					cout << "ERROR in program arguments: expecting file path to the input color image after '-i'" << endl;
-					return false;
-				}
-				inputColorFilePath = argv[argIndex];
-				if (!ImageIO::loadEXR(o_rProgramArguments.m_colorImage, argv[argIndex]))
-				{
-					cout << "ERROR in program arguments: couldn't load input color image file '" << argv[argIndex] << "'" << endl;
-					return false;
-				}
-				missingColor = false;
-			}
-			else if (strcmp(argv[argIndex], "-h") == 0)
-			{
-				argIndex++;
-				if (argIndex == argc)
-				{
-					cout << "ERROR in program arguments: expecting file path to the input histogram image after '-h'" << endl;
-					return false;
-				}
-				Deepimf histAndNbOfSamplesImage;
-				if (!ImageIO::loadMultiChannelsEXR(histAndNbOfSamplesImage, argv[argIndex]))
-				{
-					cout << "ERROR in program arguments: couldn't load input histogram image file '" << argv[argIndex] << "'" << endl;
-					return false;
-				}
-				Utils::separateNbOfSamplesFromHistogram(o_rProgramArguments.m_histogramImage, o_rProgramArguments.m_nbOfSamplesImage, histAndNbOfSamplesImage);
-				missingHist = false;
-			}
-			else if (strcmp(argv[argIndex], "-c") == 0)
-			{
-				argIndex++;
-				if (argIndex == argc)
-				{
-					cout << "ERROR in program arguments: expecting file path to the input covariance matrix image after '-c'" << endl;
-					return false;
-				}
-				if (!ImageIO::loadMultiChannelsEXR(o_rProgramArguments.m_covarianceImage, argv[argIndex]))
-				{
-					cout << "ERROR in program arguments: couldn't load input covariance matrix image file '" << argv[argIndex] << "'" << endl;
-					return false;
-				}
-				missingCov = false;
-			}
-			else if (strcmp(argv[argIndex], "-d") == 0)
+    // output path
+    o_rProgramArguments.m_denoisedOutputFilePath = outputPath;
+    ofstream outputFile(o_rProgramArguments.m_denoisedOutputFilePath, ofstream::out | ofstream::app);
+		if(!outputFile){
+			error =  "ERROR in program arguments: cannot write output file";
+			return false;
+		}
+
+    // input color path
+    string inputColorFilePath = inputColorPath;
+    if (!ImageIO::loadEXR(o_rProgramArguments.m_colorImage, inputColorPath)){
+			error = "ERROR in program arguments: couldn't load input color image file";
+			return false;
+		}
+
+    // input histogram path
+    Deepimf histAndNbOfSamplesImage;
+		if (!ImageIO::loadMultiChannelsEXR(histAndNbOfSamplesImage, inputHistPath)){
+      error = "ERROR in program arguments: couldn't load input histogram image file";
+			return false;
+		}
+		Utils::separateNbOfSamplesFromHistogram(o_rProgramArguments.m_histogramImage, 
+      o_rProgramArguments.m_nbOfSamplesImage, histAndNbOfSamplesImage);
+
+    // input covariance path
+    if (!ImageIO::loadMultiChannelsEXR(o_rProgramArguments.m_covarianceImage, inputCovariancePath)){
+			error = "ERROR in program arguments: couldn't load input covariance matrix image file";
+			return false;
+		}
+
+    //TODO: manca la gestione dei parametri opzionali
+    /*
+    else if (strcmp(argv[argIndex], "-d") == 0)
 			{
 				argIndex++;
 				if (argIndex == argc)
@@ -412,66 +375,8 @@ namespace bcd
 				istringstream iss(argv[argIndex]);
 				iss >> o_rProgramArguments.m_nbOfCores;
 			}
-			else if (strcmp(argv[argIndex], "--use-cuda") == 0)
-			{
-				argIndex++;
-				if (argIndex == argc)
-				{
-					cout << "ERROR in program arguments: expecting 0 or 1 after '--use-cuda'" << endl;
-					return false;
-				}
-				istringstream iss(argv[argIndex]);
-				int useCudaCode;
-				iss >> useCudaCode;
-				if(useCudaCode != 0 && useCudaCode != 1)
-				{
-					cout << "ERROR in program arguments: expecting 0 or 1 after '--use-cuda'" << endl;
-					return false;
-				}
-				o_rProgramArguments.m_useCuda = (useCudaCode == 1);
-			}
-		}
-		if(!missingColor)
-		{
-			if(missingHist)
-			{
-				string inputHistFilePath = inputColorFilePath.substr(0, inputColorFilePath.length() - 4) + "_hist.exr"; // "-4" for removing extension .exr
-				cout << "Warning: input histogram file not provided by -h argument: assuming '" + inputHistFilePath + "'" << endl;
-				Deepimf histAndNbOfSamplesImage;
-				if (!ImageIO::loadMultiChannelsEXR(histAndNbOfSamplesImage, inputHistFilePath.c_str()))
-				{
-					cout << "ERROR in program arguments: couldn't load input histogram image file '" << inputHistFilePath << "'" << endl;
-					return false;
-				}
-				Utils::separateNbOfSamplesFromHistogram(o_rProgramArguments.m_histogramImage, o_rProgramArguments.m_nbOfSamplesImage, histAndNbOfSamplesImage);
-				missingHist = false;
-			}
-			if(missingCov)
-			{
-				string inputCovFilePath = inputColorFilePath.substr(0, inputColorFilePath.length() - 4) + "_cov.exr"; // "-4" for removing extension .exr
-				cout << "Warning: input covariance file not provided by -c argument: assuming '" + inputCovFilePath + "'" << endl;
-				if (!ImageIO::loadMultiChannelsEXR(o_rProgramArguments.m_covarianceImage, inputCovFilePath.c_str()))
-				{
-					cout << "ERROR in program arguments: couldn't load input covariance matrix image file '" << inputCovFilePath << "'" << endl;
-					return false;
-				}
-				missingCov = false;
-			}
-		}
-		if (missingColor || missingHist || missingCov || missingOutput)
-		{
-			cout << "ERROR: Missing required program argument(s):";
-			if (missingColor)
-				cout << " -i";
-			if (missingHist)
-				cout << " -h";
-			if (missingCov)
-				cout << " -c";
-			if (missingOutput)
-				cout << " -o";
-			cout << endl << endl;
-			return false;
-		}
+		} */
+    
 		return true;
 	}
 
@@ -508,10 +413,11 @@ namespace bcd
 			}
 	}
 
-  	int launchBayesianCollaborativeDenoising(int argc, const char** argv)
+  int launchBayesianCollaborativeDenoising(string outputPath, const char *inputColorPath, const char *inputHistPath, 
+    const char *inputCovariancePath, std::string& error)
 	{
 		ProgramArguments_bcd programArgs;
-		if(!parseProgramArguments_bcd(argc, argv, programArgs))
+		if(!parseProgramArguments_bcd(outputPath, inputColorPath, inputHistPath, inputCovariancePath, programArgs, error))
 			return 1;
 
 		if(programArgs.m_prefilterSpikes)
@@ -578,7 +484,7 @@ int main(int argc, const char* argv[]) {
   auto input = "img.hdr"s;
 
   // parse command line
-  auto cli = cli::make_cli("yimgproc", "Transform images");
+  auto cli = cli::make_cli("yimgdenoise", "Denoise images");
   add_option(cli, "--output,-o", output, "output image filename");
   add_option(cli, "filename", input, "input image filename", true);
   parse_cli(cli, argc, argv);
@@ -592,6 +498,10 @@ int main(int argc, const char* argv[]) {
   
   auto ioerror  = ""s;
   
+  bcd::Chronometer programTotalTime;
+	programTotalTime.start();
+
+  //raw2bcd
   int rc = bcd::convertRawToBcd(output, input, ioerror);
 
   bcd::pauseBeforeExit();
@@ -599,6 +509,23 @@ int main(int argc, const char* argv[]) {
   if(rc == 1)
     cli::print_fatal(ioerror);
 
+  
+  //bcd 
+  
+
+	bcd::g_pProgramPath = argv[0]; // N.B.:questo mi sa che va cambiato
+	int rc; // return code
+
+	// tocca ridefinirlo senza argc e argv:
+  //rc = bcd::launchBayesianCollaborativeDenoising(argc, argv);
+
+	programTotalTime.stop();
+	cout << "Program total time: ";
+	programTotalTime.printElapsedTime();
+	cout << endl;
+
+	bcd::pauseBeforeExit();
+	return rc;
 
   // done
   return 0;

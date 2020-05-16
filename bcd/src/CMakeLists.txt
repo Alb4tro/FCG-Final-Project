@@ -15,9 +15,7 @@
 
 SET(lib_bcd_core "bcdcore")
 SET(lib_bcd_io "bcdio")
-SET(exe_bcd_cli "bcd-cli")
 SET(exe_bcd_raw_converter "bcd-raw-converter")
-SET(exe_bcd_gui "bcd-gui")
 
 #MESSAGE(STATUS "Entering subdirectory 'core'")
 ADD_SUBDIRECTORY(core)
@@ -25,16 +23,7 @@ ADD_SUBDIRECTORY(core)
 #MESSAGE(STATUS "Entering subdirectory 'io'")
 ADD_SUBDIRECTORY(io)
 
-#MESSAGE(STATUS "Entering subdirectory 'cli'")
-ADD_SUBDIRECTORY(cli)
 
 #MESSAGE(STATUS "Entering subdirectory 'raw_converter'")
 ADD_SUBDIRECTORY(raw_converter)
-
-IF(BCD_BUILD_GUI)
-#	MESSAGE(STATUS "Entering subdirectory 'gui'")
-	ADD_SUBDIRECTORY(gui)
-ELSE(BCD_BUILD_GUI)
-	MESSAGE(STATUS "skipping building of bcd_gui executable")
-ENDIF(BCD_BUILD_GUI)
 

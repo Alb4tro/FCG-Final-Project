@@ -1,0 +1,3 @@
+bin/RelWithDebInfo/nlm_denoiser --input in/noisy_lena.png --output out/lowres/denoised_lena.png --radius 6 --h 0.10  --sigma 10
+bin/RelWithDebInfo/nlm_denoiser --input in/noisy_cornellbox.png --output out/lowres/denoised_cornellbox.png --radius 6 --h 0.10  --sigma 10
+bin/RelWithDebInfo/nlm_denoiser --input in/noisy_bathroom.png --output out/lowres/denoised_bathroom.png --radius 6 --h 0.10  --sigma 10

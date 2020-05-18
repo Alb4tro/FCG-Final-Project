@@ -28,8 +28,7 @@ namespace img = yocto::image;
 namespace cli = yocto::commonio;
 namespace gui = yocto::gui;
 
-
-using namespace std;
+using namespace std::string_literals;
 
 #include <atomic>
 #include <deque>
@@ -46,15 +45,15 @@ namespace bcd
   */
 
   static const char* g_pProgramName = "bcddenoiser";
-	static const char* g_pColorSuffix = "";
-	static const char* g_pHistogramSuffix = "_hist";
-	static const char* g_pCovarianceSuffix = "_cov";
-	static const char* g_pDeepImageExtension = ".exr";
+  static const char* g_pColorSuffix = "";
+  static const char* g_pHistogramSuffix = "_hist";
+  static const char* g_pCovarianceSuffix = "_cov";
+  static const char* g_pDeepImageExtension = ".exr";
 
   const float g_satureLevelGamma = 2.f; // used in histogram accumulation
 
-	class ProgramArguments_raw2bcd
-	{
+  class ProgramArguments_raw2bcd
+  {
 	public:
 		ProgramArguments_raw2bcd() :
 				m_histogramNbOfBins(20),
@@ -63,14 +62,14 @@ namespace bcd
 		{}
 
 	public:
-		string m_inputFilePath; ///< File path to the input image
-		string m_outputColorFilePath; ///< File path to the output color image
-		string m_outputHistogramFilePath; ///< File path to the output histogram image
-		string m_outputCovarianceFilePath; ///< File path to the output covariance image
+		std::string m_inputFilePath; ///< File path to the input image
+		std::string m_outputColorFilePath; ///< File path to the output color image
+		std::string m_outputHistogramFilePath; ///< File path to the output histogram image
+		std::string m_outputCovarianceFilePath; ///< File path to the output covariance image
 		float m_histogramNbOfBins;
 		float m_histogramGamma;
 		float m_histogramMaxValue;
-	};
+  };
 
   typedef struct
 	{
@@ -81,28 +80,29 @@ namespace bcd
 		int32_t nbOfChannels;
 	} RawFileHeader;
 
-  bool parseProgramArguments_rawToBcd(string inputFilePath, string outputFilePathPrefix,
+  bool parseProgramArguments_rawToBcd(std::string inputFilePath, std::string outputFilePathPrefix,
    ProgramArguments_raw2bcd& o_rProgramArguments, std::string& error)
   {
     o_rProgramArguments.m_inputFilePath = inputFilePath;
-    if(!ifstream(o_rProgramArguments.m_inputFilePath)){
+    if(!std::ifstream(o_rProgramArguments.m_inputFilePath)){
       error = "ERROR in program arguments: cannot open input file";
       return false;
     }
 
-		o_rProgramArguments.m_outputColorFilePath = outputFilePathPrefix + g_pColorSuffix + g_pDeepImageExtension;
-		o_rProgramArguments.m_outputHistogramFilePath = outputFilePathPrefix + g_pHistogramSuffix + g_pDeepImageExtension;
-		o_rProgramArguments.m_outputCovarianceFilePath = outputFilePathPrefix + g_pCovarianceSuffix + g_pDeepImageExtension;
+	outputFilePathPrefix = outputFilePathPrefix;
+	o_rProgramArguments.m_outputColorFilePath = outputFilePathPrefix + g_pColorSuffix + g_pDeepImageExtension;
+	o_rProgramArguments.m_outputHistogramFilePath = outputFilePathPrefix + g_pHistogramSuffix + g_pDeepImageExtension;
+	o_rProgramArguments.m_outputCovarianceFilePath = outputFilePathPrefix + g_pCovarianceSuffix + g_pDeepImageExtension;
 
-    if(!ofstream(o_rProgramArguments.m_outputColorFilePath)){
+    if(!std::ofstream(o_rProgramArguments.m_outputColorFilePath)){
       error = "ERROR in program arguments: cannot write output file for color";
       return false;
     }
-    if(!ofstream(o_rProgramArguments.m_outputHistogramFilePath)){
+    if(!std::ofstream(o_rProgramArguments.m_outputHistogramFilePath)){
       error = "ERROR in program arguments: cannot write output file for histogram";
       return false;
     }
-    if(!ofstream(o_rProgramArguments.m_outputCovarianceFilePath)){
+    if(!std::fstream(o_rProgramArguments.m_outputCovarianceFilePath)){
       error = "ERROR in program arguments: cannot write output file for covariance";
       return false;
     }
@@ -112,19 +112,19 @@ namespace bcd
 
   void printHeader_raw2bcd(const RawFileHeader& i_rHeader)
 	{
-		cout << "Version: " << i_rHeader.version << endl;
-		cout << "Resolution: " << i_rHeader.width << "x" << i_rHeader.height << endl;
-		cout << "Nb of samples: " << i_rHeader.nbOfSamples << endl;
-		cout << "Nb of channels: " << i_rHeader.nbOfChannels << endl;
+		std::cout << "Version: " << i_rHeader.version << std::endl;
+		std::cout << "Resolution: " << i_rHeader.width << "x" << i_rHeader.height << std::endl;
+		std::cout << "Nb of samples: " << i_rHeader.nbOfSamples << std::endl;
+		std::cout << "Nb of channels: " << i_rHeader.nbOfChannels << std::endl;
 	}
 
-  int convertRawToBcd(string inputFilePath, string outputFilePathPrefix, std::string& error)
+  int convertRawToBcd(std::string inputFilePath, std::string outputFilePathPrefix, std::string& error)
 	{
 		ProgramArguments_raw2bcd programArgs;
 		if(!parseProgramArguments_rawToBcd(inputFilePath, outputFilePathPrefix, programArgs, error))
 			return 1;
 
-		ifstream inputFile(programArgs.m_inputFilePath.c_str(), ios::binary);
+		std::ifstream inputFile(programArgs.m_inputFilePath.c_str(), std::ios::binary);
 		RawFileHeader header;
 		inputFile.read(reinterpret_cast<char*>(&header), sizeof(RawFileHeader));
 		printHeader_raw2bcd(header);
@@ -136,7 +136,7 @@ namespace bcd
 		SamplesAccumulator samplesAccumulator(header.width, header.height, histoParams);
 
 		float sample[4]; // assumes nbOfChannels can be only 3 or 4
-		streamsize sampleSize = header.nbOfChannels * sizeof(float);
+		std::streamsize sampleSize = header.nbOfChannels * sizeof(float);
 		for(int32_t line = 0; line < header.height; ++line)
 		{
 			for(int32_t col = 0; col < header.width; ++col)
@@ -167,8 +167,8 @@ namespace bcd
   */
   static const char* g_pProgramPath;
 
-	class ProgramArguments_bcd
-	{
+  class ProgramArguments_bcd
+  {
 	public:
 		ProgramArguments_bcd() :
 			m_denoisedOutputFilePath(""),
@@ -186,7 +186,7 @@ namespace bcd
 		{}
 
 	public:
-		string m_denoisedOutputFilePath; ///< File path to the denoised image output
+		std::string m_denoisedOutputFilePath; ///< File path to the denoised image output
 		Deepimf m_colorImage; ///< Pixel color values
 		Deepimf m_nbOfSamplesImage; ///< Pixel number of samples
 		Deepimf m_histogramImage; ///< Pixel histograms
@@ -202,26 +202,26 @@ namespace bcd
 		int m_nbOfScales;
 		int m_nbOfCores; ///< Number of cores used by OpenMP. O means using the value defined in environment variable OMP_NUM_THREADS
 		bool m_useCuda; ///< True means that the program will use Cuda (if available) to parallelize computations
-	};
+  };
 
   void initializeRandomSeed()
 	{
 		srand(static_cast<unsigned int>(time(0)));
 	}
 
-  bool parseProgramArguments_bcd(string outputPath, const char *inputColorPath, const char *inputHistPath, 
+  bool parseProgramArguments_bcd(std::string outputPath, const char *inputColorPath, const char *inputHistPath, 
     const char *inputCovariancePath, ProgramArguments_bcd& o_rProgramArguments, std::string& error)
 	{
     // output path
     o_rProgramArguments.m_denoisedOutputFilePath = outputPath;
-    ofstream outputFile(o_rProgramArguments.m_denoisedOutputFilePath, ofstream::out | ofstream::app);
+    std::ofstream outputFile(o_rProgramArguments.m_denoisedOutputFilePath, std::ofstream::out | std::ofstream::app);
 		if(!outputFile){
 			error =  "ERROR in program arguments: cannot write output file";
 			return false;
 		}
 
     // input color path
-    string inputColorFilePath = inputColorPath;
+    std::string inputColorFilePath = inputColorPath;
     if (!ImageIO::loadEXR(o_rProgramArguments.m_colorImage, inputColorPath)){
 			error = "ERROR in program arguments: couldn't load input color image file";
 			return false;
@@ -388,7 +388,7 @@ namespace bcd
 		int height = io_rImage.getHeight();
 		int depth = io_rImage.getDepth();
 		bool hasBadValue = false;
-		vector<float> values(depth);
+		std::vector<float> values(depth);
 		float val = 0.f;
 		for (int line = 0; line < height; line++)
 			for (int col = 0; col < width; col++)
@@ -405,15 +405,15 @@ namespace bcd
 				}
 				if(hasBadValue && i_verbose)
 				{
-					cout << "Warning: strange value for pixel (line,column)=(" << line << "," << col << "): (" << values[0];
+					std::cout << "Warning: strange value for pixel (line,column)=(" << line << "," << col << "): (" << values[0];
 					for(int i = 1; i < depth; ++i)
-						cout << ", " << values[i];
-					cout << ")" << endl;
+						std::cout << ", " << values[i];
+					std::cout << ")" << std::endl;
 				}
 			}
 	}
 
-  int launchBayesianCollaborativeDenoising(string outputPath, const char *inputColorPath, const char *inputHistPath, 
+  int launchBayesianCollaborativeDenoising(std::string outputPath, const char *inputColorPath, const char *inputHistPath, 
     const char *inputCovariancePath, std::string& error)
 	{
 		ProgramArguments_bcd programArgs;
@@ -449,7 +449,7 @@ namespace bcd
 		parameters.m_nbOfCores = programArgs.m_nbOfCores;
 		parameters.m_useCuda = programArgs.m_useCuda;
 
-		unique_ptr<IDenoiser> uDenoiser = nullptr;
+		std::unique_ptr<IDenoiser> uDenoiser = nullptr;
 
 		if(programArgs.m_nbOfScales > 1)
 			uDenoiser.reset(new MultiscaleDenoiser(programArgs.m_nbOfScales));
@@ -465,14 +465,14 @@ namespace bcd
 		checkAndPutToZeroNegativeInfNaNValues(outputDenoisedColorImage);
 
 		ImageIO::writeEXR(outputDenoisedColorImage, programArgs.m_denoisedOutputFilePath.c_str());
-		cout << "Written denoised output in file " << programArgs.m_denoisedOutputFilePath.c_str() << endl;
+		std::cout << "Written denoised output in file " << programArgs.m_denoisedOutputFilePath.c_str() << std::endl;
 
 		return 0;
 	} // end bcd
 
   void pauseBeforeExit()
 	{
-		cout << "Exiting program!" << endl;
+		std::cout << "Exiting program!" << std::endl;
 	}
 
 } // namespace bcd
@@ -485,7 +485,7 @@ int main(int argc, const char* argv[]) {
 
   // parse command line
   auto cli = cli::make_cli("yimgdenoise", "Denoise images");
-  add_option(cli, "--output,-o", output, "output image filename");
+  add_option(cli, "--output,-o", output, "output image filename", true);
   add_option(cli, "filename", input, "input image filename", true);
   parse_cli(cli, argc, argv);
   
@@ -498,10 +498,13 @@ int main(int argc, const char* argv[]) {
   
   auto ioerror  = ""s;
   
-  bcd::Chronometer programTotalTime;
-	programTotalTime.start();
+  bcd::Chronometer programTotalTime; 
+  programTotalTime.start();
+
+  std::cout << input << "\n";
 
   //raw2bcd
+  //int rc = 0;
   int rc = bcd::convertRawToBcd(output, input, ioerror);
 
   bcd::pauseBeforeExit();
@@ -511,21 +514,22 @@ int main(int argc, const char* argv[]) {
 
   
   //bcd 
-  
+  bcd::g_pProgramPath = argv[0]; // N.B.:questo mi sa che va cambiato
 
-	bcd::g_pProgramPath = argv[0]; // N.B.:questo mi sa che va cambiato
-	int rc; // return code
+ 
+  auto final_output = "denoised_image.exr";
+  const char *color_exr = (output + ".exr").c_str();
+  const char *hist_exr = (output + "_hist" + ".exr").c_str();
+  const char *cov_exr = (output + "_cov" + ".exr").c_str();
+  rc = bcd::launchBayesianCollaborativeDenoising(final_output, color_exr, hist_exr, cov_exr, ioerror);
 
-	// tocca ridefinirlo senza argc e argv:
-  //rc = bcd::launchBayesianCollaborativeDenoising(argc, argv);
 
-	programTotalTime.stop();
-	cout << "Program total time: ";
-	programTotalTime.printElapsedTime();
-	cout << endl;
+  programTotalTime.stop();
+  programTotalTime.printElapsedTime();
 
-	bcd::pauseBeforeExit();
-	return rc;
+  bcd::pauseBeforeExit();
+  return rc;
+
 
   // done
   return 0;

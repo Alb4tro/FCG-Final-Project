@@ -1,0 +1,1 @@
+./bin/yimagedenoisetry tests/test.raw -o out/not_noise_image

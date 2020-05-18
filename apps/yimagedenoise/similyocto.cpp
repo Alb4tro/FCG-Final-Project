@@ -85,7 +85,7 @@ namespace bcd
   {
     o_rProgramArguments.m_inputFilePath = inputFilePath;
     if(!std::ifstream(o_rProgramArguments.m_inputFilePath)){
-      error = "ERROR in program arguments: cannot open input file";
+      error = "ERROR in program arguments: cannot open input file" + o_rProgramArguments.m_inputFilePath;
       return false;
     }
 
@@ -95,15 +95,15 @@ namespace bcd
 	o_rProgramArguments.m_outputCovarianceFilePath = outputFilePathPrefix + g_pCovarianceSuffix + g_pDeepImageExtension;
 
     if(!std::ofstream(o_rProgramArguments.m_outputColorFilePath)){
-      error = "ERROR in program arguments: cannot write output file for color";
+      error = "ERROR in program arguments: cannot write output file for color " + o_rProgramArguments.m_outputColorFilePath;
       return false;
     }
     if(!std::ofstream(o_rProgramArguments.m_outputHistogramFilePath)){
-      error = "ERROR in program arguments: cannot write output file for histogram";
+      error = "ERROR in program arguments: cannot write output file for histogram " + o_rProgramArguments.m_outputHistogramFilePath;
       return false;
     }
-    if(!std::fstream(o_rProgramArguments.m_outputCovarianceFilePath)){
-      error = "ERROR in program arguments: cannot write output file for covariance";
+    if(!std::ofstream(o_rProgramArguments.m_outputCovarianceFilePath)){
+      error = "ERROR in program arguments: cannot write output file for covariance " + o_rProgramArguments.m_outputCovarianceFilePath;
       return false;
     }
        
@@ -209,8 +209,8 @@ namespace bcd
 		srand(static_cast<unsigned int>(time(0)));
 	}
 
-  bool parseProgramArguments_bcd(std::string outputPath, const char *inputColorPath, const char *inputHistPath, 
-    const char *inputCovariancePath, ProgramArguments_bcd& o_rProgramArguments, std::string& error)
+  bool parseProgramArguments_bcd(std::string outputPath, std::string inputColorPath, std::string inputHistPath, 
+    std::string inputCovariancePath, ProgramArguments_bcd& o_rProgramArguments, std::string& error)
 	{
     // output path
     o_rProgramArguments.m_denoisedOutputFilePath = outputPath;
@@ -221,26 +221,31 @@ namespace bcd
 		}
 
     // input color path
-    std::string inputColorFilePath = inputColorPath;
-    if (!ImageIO::loadEXR(o_rProgramArguments.m_colorImage, inputColorPath)){
+    const char* inputColorFilePath = inputColorPath.c_str();
+    if (!ImageIO::loadEXR(o_rProgramArguments.m_colorImage, inputColorFilePath)){
 			error = "ERROR in program arguments: couldn't load input color image file";
 			return false;
 		}
+	std::cout << "Color image loaded" << "\n";
 
     // input histogram path
     Deepimf histAndNbOfSamplesImage;
-		if (!ImageIO::loadMultiChannelsEXR(histAndNbOfSamplesImage, inputHistPath)){
-      error = "ERROR in program arguments: couldn't load input histogram image file";
-			return false;
-		}
-		Utils::separateNbOfSamplesFromHistogram(o_rProgramArguments.m_histogramImage, 
+	const char* inputHistPath_ = inputHistPath.c_str();
+	if (!ImageIO::loadMultiChannelsEXR(histAndNbOfSamplesImage, inputHistPath_)){
+        error = "ERROR in program arguments: couldn't load input histogram image file";
+		return false;
+	}
+	Utils::separateNbOfSamplesFromHistogram(o_rProgramArguments.m_histogramImage, 
       o_rProgramArguments.m_nbOfSamplesImage, histAndNbOfSamplesImage);
+	std::cout << "Histogram loaded" << "\n";
 
     // input covariance path
-    if (!ImageIO::loadMultiChannelsEXR(o_rProgramArguments.m_covarianceImage, inputCovariancePath)){
+	const char* inputCovPath = inputCovariancePath.c_str();
+    if (!ImageIO::loadMultiChannelsEXR(o_rProgramArguments.m_covarianceImage, inputCovPath)){
 			error = "ERROR in program arguments: couldn't load input covariance matrix image file";
 			return false;
 		}
+	std::cout << "Covariance loaded" << "\n";
 
     //TODO: manca la gestione dei parametri opzionali
     /*
@@ -413,8 +418,8 @@ namespace bcd
 			}
 	}
 
-  int launchBayesianCollaborativeDenoising(std::string outputPath, const char *inputColorPath, const char *inputHistPath, 
-    const char *inputCovariancePath, std::string& error)
+  int launchBayesianCollaborativeDenoising(std::string outputPath, std::string inputColorPath, std::string inputHistPath, 
+    std::string inputCovariancePath, std::string& error)
 	{
 		ProgramArguments_bcd programArgs;
 		if(!parseProgramArguments_bcd(outputPath, inputColorPath, inputHistPath, inputCovariancePath, programArgs, error))
@@ -472,7 +477,7 @@ namespace bcd
 
   void pauseBeforeExit()
 	{
-		std::cout << "Exiting program!" << std::endl;
+		std::cout << "Image denoised!" << std::endl;
 	}
 
 } // namespace bcd
@@ -501,26 +506,22 @@ int main(int argc, const char* argv[]) {
   bcd::Chronometer programTotalTime; 
   programTotalTime.start();
 
-  std::cout << input << "\n";
-
   //raw2bcd
-  //int rc = 0;
-  int rc = bcd::convertRawToBcd(output, input, ioerror);
-
-  bcd::pauseBeforeExit();
+  int rc = bcd::convertRawToBcd(input, output, ioerror);
 
   if(rc == 1)
     cli::print_fatal(ioerror);
 
+
+  std::cout << "Conversion done" << "\n";
+
   
   //bcd 
-  bcd::g_pProgramPath = argv[0]; // N.B.:questo mi sa che va cambiato
+  std::string final_output = "out/denoised_image.exr";
+  std::string color_exr = output + ".exr";
+  std::string hist_exr = output + "_hist" + ".exr";
+  std::string cov_exr = output + "_cov" + ".exr";
 
- 
-  auto final_output = "denoised_image.exr";
-  const char *color_exr = (output + ".exr").c_str();
-  const char *hist_exr = (output + "_hist" + ".exr").c_str();
-  const char *cov_exr = (output + "_cov" + ".exr").c_str();
   rc = bcd::launchBayesianCollaborativeDenoising(final_output, color_exr, hist_exr, cov_exr, ioerror);
 
 

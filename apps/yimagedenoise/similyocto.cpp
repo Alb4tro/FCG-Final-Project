@@ -369,11 +369,6 @@ namespace bcd
 		return 0;
 	} // end bcd
 
-  void pauseBeforeExit()
-	{
-		std::cout << "Image denoised!" << std::endl;
-	}
-
 } // namespace bcd
 
 
@@ -381,7 +376,6 @@ int main(int argc, const char* argv[]) {
   // command line parameters
   auto output = "out.png"s;
   auto input = "img.hdr"s;
-
   auto hist_distance = 1.f;
   auto windows_radius = 6;
   auto patches_radius = 1;
@@ -411,6 +405,7 @@ int main(int argc, const char* argv[]) {
   
   auto ioerror  = ""s;
 
+  // check optional parameters
   if(random_order != 0 && random_order != 1)
 	cli::print_fatal("ERROR in program arguments: expecting 0 or 1 after '-r'");
   if(spike_removal != 0 && spike_removal != 1)
@@ -426,7 +421,6 @@ int main(int argc, const char* argv[]) {
 
   if(rc == 1)
     cli::print_fatal(ioerror);
-
 
   std::cout << "Conversion done" << "\n";
 
@@ -456,10 +450,8 @@ int main(int argc, const char* argv[]) {
   programTotalTime.stop();
   programTotalTime.printElapsedTime();
 
-  bcd::pauseBeforeExit();
-  return rc;
-
+  std::cout << "Image denoised!" << std::endl;
 
   // done
-  return 0;
+  return rc;
 }

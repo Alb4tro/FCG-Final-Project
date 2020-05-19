@@ -208,7 +208,7 @@ namespace bcd
 	}
 
   	bool parseProgramArguments_bcd(std::string outputPath, std::string inputColorPath, std::string inputHistPath, 
-    std::string inputCovariancePath, ProgramArguments_bcd& o_rProgramArguments, std::string& error, ProgramArguments_bcd& programArgs_)
+    	std::string inputCovariancePath, ProgramArguments_bcd& o_rProgramArguments, std::string& error, ProgramArguments_bcd& programArgs_)
 	{
     	// output path
     	o_rProgramArguments.m_denoisedOutputFilePath = outputPath;
@@ -259,28 +259,15 @@ namespace bcd
 		o_rProgramArguments.m_minEigenValue = programArgs_.m_minEigenValue;
 		std::cout << "Min eigen value set to: " << o_rProgramArguments.m_minEigenValue << "\n";
 
-	
-		if(programArgs_.m_useRandomPixelOrder != 0 && programArgs_.m_useRandomPixelOrder != 1){
-			error = "ERROR in program arguments: expecting 0 or 1 after '-r'";
-			return false;
-		}
 		o_rProgramArguments.m_useRandomPixelOrder = programArgs_.m_useRandomPixelOrder;
 		std::cout << "Random pixel order set to: " << o_rProgramArguments.m_useRandomPixelOrder << "\n";
 
-		if(programArgs_.m_prefilterSpikes != 0 && programArgs_.m_prefilterSpikes != 1){
-			error = "ERROR in program arguments: expecting 0 or 1 after '-p'";
-			return false;
-		}
 		o_rProgramArguments.m_prefilterSpikes = programArgs_.m_prefilterSpikes;
 		std::cout << "Prefilter spikes set to: " << o_rProgramArguments.m_prefilterSpikes << "\n";
 
 		o_rProgramArguments.m_prefilterThresholdStDevFactor = programArgs_.m_prefilterThresholdStDevFactor;
 		std::cout << "Std deviation factor set to: " << o_rProgramArguments.m_prefilterThresholdStDevFactor << "\n";
 
-		if(programArgs_.m_markedPixelsSkippingProbability < 0 || programArgs_.m_markedPixelsSkippingProbability > 1){
-			error = "ERROR in program arguments: expecting float in [0,1] after '-m'";
-			return false;
-		}
 		o_rProgramArguments.m_markedPixelsSkippingProbability = programArgs_.m_markedPixelsSkippingProbability;
 		std::cout << "Skip probability set to: " << o_rProgramArguments.m_markedPixelsSkippingProbability << "\n";
 
@@ -423,6 +410,13 @@ int main(int argc, const char* argv[]) {
   parse_cli(cli, argc, argv);
   
   auto ioerror  = ""s;
+
+  if(random_order != 0 && random_order != 1)
+	cli::print_fatal("ERROR in program arguments: expecting 0 or 1 after '-r'");
+  if(spike_removal != 0 && spike_removal != 1)
+	cli::print_fatal("ERROR in program arguments: expecting 0 or 1 after '-p'");
+  if(skip_marked_patches < 0 || skip_marked_patches > 1)
+	cli::print_fatal("ERROR in program arguments: expecting float in [0,1] after '-m'");
   
   bcd::Chronometer programTotalTime; 
   programTotalTime.start();
@@ -452,7 +446,7 @@ int main(int argc, const char* argv[]) {
   programArgs_.m_nbOfScales = multi_scaling;
   programArgs_.m_minEigenValue = min_eigen_val;
   programArgs_.m_nbOfCores = core_to_use;
-  programArgs_.m_prefilterThresholdStDevFactor = factor;
+  programArgs_.m_prefilterThresholdStDevFactor = factor;	
   programArgs_.m_prefilterSpikes = spike_removal;
   programArgs_.m_searchWindowRadius = windows_radius;
 

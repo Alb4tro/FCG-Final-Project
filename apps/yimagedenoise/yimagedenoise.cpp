@@ -1,29 +1,18 @@
-// This file is part of the reference implementation for the paper 
-//   Bayesian Collaborative Denoising for Monte-Carlo Rendering
-//   Malik Boughida and Tamy Boubekeur.
-//   Computer Graphics Forum (Proc. EGSR 2017), vol. 36, no. 4, p. 137-153, 2017
-//
-// All rights reserved. Use of this source code is governed by a
-// BSD-style license that can be found in the LICENSE.txt file.
+#include <yocto/yocto_commonio.h>
+#include <yocto/yocto_image.h>
+#include <yocto_gui/yocto_gui.h>
 
 #include "Denoiser.h"
 #include "MultiscaleDenoiser.h"
 #include "IDenoiser.h"
-
 #include "SpikeRemovalFilter.h"
-
-#ifdef FOUND_CUDA
-#include "CudaHistogramDistance.h"
-#endif
-
 #include "ParametersIO.h"
 #include "ImageIO.h"
 #include "DeepImage.h"
-
 #include "Chronometer.h"
 #include "Utils.h"
-
-//#include <Eigen/Dense>
+#include "SamplesAccumulator.h"
+#include "CovarianceMatrix.h"
 
 #include <iostream>
 #include <ctime>
@@ -32,18 +21,156 @@
 #include <string>
 #include <cstdlib>
 #include <memory>
+#include <numeric>
 
-using namespace std;
+using namespace yocto::math;
+namespace img = yocto::image;
+namespace cli = yocto::commonio;
+namespace gui = yocto::gui;
 
-namespace bcd
+using namespace std::string_literals;
+
+#include <atomic>
+#include <deque>
+#include <future>
+
+#include "ext/filesystem.hpp"
+namespace sfs = ghc::filesystem;
+
+
+namespace bcd 
 {
+  /*
+  * Raw converter to bcd
+  */
 
-	static const char* g_pProgramPath;
+  static const char* g_pProgramName = "bcddenoiser";
+  static const char* g_pColorSuffix = "";
+  static const char* g_pHistogramSuffix = "_hist";
+  static const char* g_pCovarianceSuffix = "_cov";
+  static const char* g_pDeepImageExtension = ".exr";
 
-	class ProgramArguments
-	{
+  const float g_satureLevelGamma = 2.f; // used in histogram accumulation
+
+  class ProgramArguments_raw2bcd
+  {
 	public:
-		ProgramArguments() :
+		ProgramArguments_raw2bcd() :
+				m_histogramNbOfBins(20),
+				m_histogramGamma(2.2f),
+				m_histogramMaxValue(2.5f)
+		{}
+
+	public:
+		std::string m_inputFilePath; ///< File path to the input image
+		std::string m_outputColorFilePath; ///< File path to the output color image
+		std::string m_outputHistogramFilePath; ///< File path to the output histogram image
+		std::string m_outputCovarianceFilePath; ///< File path to the output covariance image
+		float m_histogramNbOfBins;
+		float m_histogramGamma;
+		float m_histogramMaxValue;
+  };
+
+  typedef struct
+	{
+		int32_t version;
+		int32_t width;
+		int32_t height;
+		int32_t nbOfSamples;
+		int32_t nbOfChannels;
+	} RawFileHeader;
+
+  bool parseProgramArguments_rawToBcd(std::string inputFilePath, std::string outputFilePathPrefix,
+   ProgramArguments_raw2bcd& o_rProgramArguments, std::string& error)
+  {
+    o_rProgramArguments.m_inputFilePath = inputFilePath;
+    if(!std::ifstream(o_rProgramArguments.m_inputFilePath)){
+      error = "ERROR in program arguments: cannot open input file" + o_rProgramArguments.m_inputFilePath;
+      return false;
+    }
+
+	outputFilePathPrefix = outputFilePathPrefix;
+	o_rProgramArguments.m_outputColorFilePath = outputFilePathPrefix + g_pColorSuffix + g_pDeepImageExtension;
+	o_rProgramArguments.m_outputHistogramFilePath = outputFilePathPrefix + g_pHistogramSuffix + g_pDeepImageExtension;
+	o_rProgramArguments.m_outputCovarianceFilePath = outputFilePathPrefix + g_pCovarianceSuffix + g_pDeepImageExtension;
+
+    if(!std::ofstream(o_rProgramArguments.m_outputColorFilePath)){
+      error = "ERROR in program arguments: cannot write output file for color " + o_rProgramArguments.m_outputColorFilePath;
+      return false;
+    }
+    if(!std::ofstream(o_rProgramArguments.m_outputHistogramFilePath)){
+      error = "ERROR in program arguments: cannot write output file for histogram " + o_rProgramArguments.m_outputHistogramFilePath;
+      return false;
+    }
+    if(!std::ofstream(o_rProgramArguments.m_outputCovarianceFilePath)){
+      error = "ERROR in program arguments: cannot write output file for covariance " + o_rProgramArguments.m_outputCovarianceFilePath;
+      return false;
+    }
+       
+    return true;
+  }
+
+  void printHeader_raw2bcd(const RawFileHeader& i_rHeader)
+	{
+		std::cout << "Version: " << i_rHeader.version << std::endl;
+		std::cout << "Resolution: " << i_rHeader.width << "x" << i_rHeader.height << std::endl;
+		std::cout << "Nb of samples: " << i_rHeader.nbOfSamples << std::endl;
+		std::cout << "Nb of channels: " << i_rHeader.nbOfChannels << std::endl;
+	}
+
+  int convertRawToBcd(std::string inputFilePath, std::string outputFilePathPrefix, std::string& error)
+	{
+		ProgramArguments_raw2bcd programArgs;
+		if(!parseProgramArguments_rawToBcd(inputFilePath, outputFilePathPrefix, programArgs, error))
+			return 1;
+
+		std::ifstream inputFile(programArgs.m_inputFilePath.c_str(), std::ios::binary);
+		RawFileHeader header;
+		inputFile.read(reinterpret_cast<char*>(&header), sizeof(RawFileHeader));
+		printHeader_raw2bcd(header);
+
+		HistogramParameters histoParams;
+		histoParams.m_nbOfBins = programArgs.m_histogramNbOfBins;
+		histoParams.m_gamma = programArgs.m_histogramGamma;
+		histoParams.m_maxValue = programArgs.m_histogramMaxValue;
+		SamplesAccumulator samplesAccumulator(header.width, header.height, histoParams);
+
+		float sample[4]; // assumes nbOfChannels can be only 3 or 4
+		std::streamsize sampleSize = header.nbOfChannels * sizeof(float);
+		for(int32_t line = 0; line < header.height; ++line)
+		{
+			for(int32_t col = 0; col < header.width; ++col)
+			{
+				for(int32_t sampleIndex = 0; sampleIndex < header.nbOfSamples; ++sampleIndex)
+				{
+					inputFile.read(reinterpret_cast<char*>(sample), sampleSize);
+					samplesAccumulator.addSample(line, col, sample[0], sample[1], sample[2]);
+				}
+			}
+		}
+
+		SamplesStatisticsImages samplesStats = samplesAccumulator.extractSamplesStatistics();
+		Deepimf histoAndNbOfSamplesImage = Utils::mergeHistogramAndNbOfSamples(samplesStats.m_histoImage, samplesStats.m_nbOfSamplesImage);
+
+		samplesStats.m_histoImage.clearAndFreeMemory();
+		samplesStats.m_nbOfSamplesImage.clearAndFreeMemory();
+
+		ImageIO::writeEXR(samplesStats.m_meanImage, programArgs.m_outputColorFilePath.c_str());
+		ImageIO::writeMultiChannelsEXR(samplesStats.m_covarImage, programArgs.m_outputCovarianceFilePath.c_str());
+		ImageIO::writeMultiChannelsEXR(histoAndNbOfSamplesImage, programArgs.m_outputHistogramFilePath.c_str());
+
+		return 0;
+	} // end raw converter to bcd
+
+  /*
+  * Bayesian Collaborative Denoise
+  */
+  static const char* g_pProgramPath;
+
+  class ProgramArguments_bcd
+  {
+	public:
+		ProgramArguments_bcd() :
 			m_denoisedOutputFilePath(""),
 			m_colorImage(), m_nbOfSamplesImage(), m_histogramImage(), m_covarianceImage(),
 			m_histogramPatchDistanceThreshold(1.f),
@@ -54,12 +181,11 @@ namespace bcd
 			m_prefilterThresholdStDevFactor(2.f),
 			m_markedPixelsSkippingProbability(1.f),
 			m_nbOfScales(3),
-			m_nbOfCores(0),
-			m_useCuda(true)
+			m_nbOfCores(0)
 		{}
 
 	public:
-		string m_denoisedOutputFilePath; ///< File path to the denoised image output
+		std::string m_denoisedOutputFilePath; ///< File path to the denoised image output
 		Deepimf m_colorImage; ///< Pixel color values
 		Deepimf m_nbOfSamplesImage; ///< Pixel number of samples
 		Deepimf m_histogramImage; ///< Pixel histograms
@@ -74,319 +200,98 @@ namespace bcd
 		float m_markedPixelsSkippingProbability; ///< 1 means the marked centers of the denoised patches will be skipped to accelerate a lot the computations
 		int m_nbOfScales;
 		int m_nbOfCores; ///< Number of cores used by OpenMP. O means using the value defined in environment variable OMP_NUM_THREADS
-		bool m_useCuda; ///< True means that the program will use Cuda (if available) to parallelize computations
-	};
+  };
 
-
-	void initializeRandomSeed()
+  	void initializeRandomSeed()
 	{
 		srand(static_cast<unsigned int>(time(0)));
 	}
 
-
-	/// @brief Error/Exit print a message and exit.
-	/// @param[in] msg Message to print before exiting program
-	static void printError(const char *msg)
+	bool parseBcdArguments(ProgramArguments_bcd& programArgs, std::string& error, std::string output, float hist_distance, int windows_radius, int patches_radius, 
+		int random_order, int spike_removal, float factor, float skip_marked_patches, int multi_scaling, int core_to_use, float min_eigen_val)
 	{
-		cerr << "Error in program '" << g_pProgramPath << "': " << msg << endl;
-	}
+		std::string outputPath = "out/denoised_image.exr";
+  		std::string inputColorPath = output + ".exr";
+  		std::string inputHistPath = output + "_hist" + ".exr";
+  		std::string inputCovariancePath = output + "_cov" + ".exr";
 
-
-	static void printUsage()
-	{
-		ProgramArguments defaultProgramArgs;
-		cout << "Bayesian Collaborative Denoising"<< endl << endl;
-		cout << "Usage: " << g_pProgramPath << " <arguments list>" << endl;
-		cout << "Only EXR images are supported." << endl << endl;
-		cout << "Required arguments list (unless a pipeline file is provided and contains this data):" << endl;
-		cout << "    -o <output>          The file path to the output image" << endl;
-		cout << "    -i <input>           The file path to the input image" << endl;
-		cout << "    -h <hist>            The file path to the input histograms buffer" << endl;
-		cout << "    -c <cov>             The file path to the input covariance matrices buffer" << endl;
-		cout << "Optional arguments list:" << endl;
-		cout << "    -a <file>            The file path to the .bcd.json file containing arguments for the program" << endl;
-		cout << "    -d <float>           Histogram patch distance threshold (default: " << defaultProgramArgs.m_histogramPatchDistanceThreshold << ")" << endl;
-		cout << "    -b <int>             Radius of search windows (default: " << defaultProgramArgs.m_searchWindowRadius << ")" << endl;
-		cout << "    -w <int>             Radius of patches (default: " << defaultProgramArgs.m_patchRadius << ")" << endl;
-		cout << "    -r <0/1>             1 for random pixel order (in case of grid artifacts) (default: " << (defaultProgramArgs.m_useRandomPixelOrder ? 1 : 0) << ")" << endl;
-		cout << "    -p <0/1>             1 for a spike removal prefiltering (default: " << (defaultProgramArgs.m_prefilterSpikes ? 1 : 0) << ")" << endl;
-		cout << "    --p-factor <float>   Factor that is multiplied by standard deviation to get the threshold for classifying spikes during prefiltering. Put lower value to remove more spikes (default: " << defaultProgramArgs.m_prefilterThresholdStDevFactor << ")" << endl;
-		cout << "    -m <float in [0,1]>  Probability of skipping marked centers of denoised patches. 1 accelerates a lot the computations. 0 helps removing potential grid artifacts (default: " << defaultProgramArgs.m_markedPixelsSkippingProbability << ")" << endl;
-		cout << "    -s <int>             Number of Scales for Multi-Scaling (default: " << defaultProgramArgs.m_nbOfScales << ")" << endl;
-		cout << "    --ncores <nbOfCores> Number of cores used by OpenMP (default: environment variable OMP_NUM_THREADS)" << endl;
-		cout << "    --use-cuda <0/1>     1 to use cuda, 0 not to use it (default: " << (defaultProgramArgs.m_useCuda ? 1 : 0) << ")" << endl;
-		cout << "    -e <float>           Minimum eigen value for matrix inversion (default: " << defaultProgramArgs.m_minEigenValue << ")" << endl;
-	}
-
-
-	bool parseProgramArguments(int argc, const char** argv, ProgramArguments& o_rProgramArguments)
-	{
-		int argIndex = 0;
-		bool missingColor = true, missingHist = true, missingCov = true, missingOutput = true;
-		string inputColorFilePath;
-		while (++argIndex < argc)
-		{
-			if (strcmp(argv[argIndex], "-o") == 0)
-			{
-				argIndex++;
-				if (argIndex == argc)
-				{
-					cout << "ERROR in program arguments: expecting file path to the output image after '-o'" << endl;
-					return false;
-				}
-				o_rProgramArguments.m_denoisedOutputFilePath = string(argv[argIndex]);
-				ofstream outputFile(o_rProgramArguments.m_denoisedOutputFilePath, ofstream::out | ofstream::app);
-				if(!outputFile)
-				{
-					cout << "ERROR in program arguments: cannot write output file '" << o_rProgramArguments.m_denoisedOutputFilePath << "'" << endl;
-					return false;
-				}
-				missingOutput = false;
-			}
-			else if (strcmp(argv[argIndex], "-i") == 0)
-			{
-				argIndex++;
-				if (argIndex == argc)
-				{
-					cout << "ERROR in program arguments: expecting file path to the input color image after '-i'" << endl;
-					return false;
-				}
-				inputColorFilePath = argv[argIndex];
-				if (!ImageIO::loadEXR(o_rProgramArguments.m_colorImage, argv[argIndex]))
-				{
-					cout << "ERROR in program arguments: couldn't load input color image file '" << argv[argIndex] << "'" << endl;
-					return false;
-				}
-				missingColor = false;
-			}
-			else if (strcmp(argv[argIndex], "-h") == 0)
-			{
-				argIndex++;
-				if (argIndex == argc)
-				{
-					cout << "ERROR in program arguments: expecting file path to the input histogram image after '-h'" << endl;
-					return false;
-				}
-				Deepimf histAndNbOfSamplesImage;
-				if (!ImageIO::loadMultiChannelsEXR(histAndNbOfSamplesImage, argv[argIndex]))
-				{
-					cout << "ERROR in program arguments: couldn't load input histogram image file '" << argv[argIndex] << "'" << endl;
-					return false;
-				}
-				Utils::separateNbOfSamplesFromHistogram(o_rProgramArguments.m_histogramImage, o_rProgramArguments.m_nbOfSamplesImage, histAndNbOfSamplesImage);
-				missingHist = false;
-			}
-			else if (strcmp(argv[argIndex], "-c") == 0)
-			{
-				argIndex++;
-				if (argIndex == argc)
-				{
-					cout << "ERROR in program arguments: expecting file path to the input covariance matrix image after '-c'" << endl;
-					return false;
-				}
-				if (!ImageIO::loadMultiChannelsEXR(o_rProgramArguments.m_covarianceImage, argv[argIndex]))
-				{
-					cout << "ERROR in program arguments: couldn't load input covariance matrix image file '" << argv[argIndex] << "'" << endl;
-					return false;
-				}
-				missingCov = false;
-			}
-			else if (strcmp(argv[argIndex], "-d") == 0)
-			{
-				argIndex++;
-				if (argIndex == argc)
-				{
-					cout << "ERROR in program arguments: expecting histogram patch distance threshold after '-d'" << endl;
-					return false;
-				}
-				istringstream iss(argv[argIndex]);
-				iss >> o_rProgramArguments.m_histogramPatchDistanceThreshold;
-			}
-			else if (strcmp(argv[argIndex], "-b") == 0)
-			{
-				argIndex++;
-				if (argIndex == argc)
-				{
-					cout << "ERROR in program arguments: expecting radius of search window after '-b'" << endl;
-					return false;
-				}
-				istringstream iss(argv[argIndex]);
-				iss >> o_rProgramArguments.m_searchWindowRadius;
-			}
-			else if (strcmp(argv[argIndex], "-w") == 0)
-			{
-				argIndex++;
-				if (argIndex == argc)
-				{
-					cout << "ERROR in program arguments: expecting radius of patch after '-w'" << endl;
-					return false;
-				}
-				istringstream iss(argv[argIndex]);
-				iss >> o_rProgramArguments.m_patchRadius;
-			}
-			else if (strcmp(argv[argIndex], "-e") == 0)
-			{
-				argIndex++;
-				if (argIndex == argc)
-				{
-					cout << "ERROR in program arguments: expecting minimum eigen value after '-e'" << endl;
-					return false;
-				}
-				istringstream iss(argv[argIndex]);
-				iss >> o_rProgramArguments.m_minEigenValue;
-			}
-			else if (strcmp(argv[argIndex], "-r") == 0)
-			{
-				argIndex++;
-				if (argIndex == argc)
-				{
-					cout << "ERROR in program arguments: expecting 0 or 1 after '-r'" << endl;
-					return false;
-				}
-				istringstream iss(argv[argIndex]);
-				int useRandomPixelOrder;
-				iss >> useRandomPixelOrder;
-				if(useRandomPixelOrder != 0 && useRandomPixelOrder != 1)
-				{
-					cout << "ERROR in program arguments: expecting 0 or 1 after '-r'" << endl;
-					return false;
-				}
-				o_rProgramArguments.m_useRandomPixelOrder = (useRandomPixelOrder==1);
-			}
-			else if (strcmp(argv[argIndex], "-p") == 0)
-			{
-				argIndex++;
-				if (argIndex == argc)
-				{
-					cout << "ERROR in program arguments: expecting 0 or 1 after '-p'" << endl;
-					return false;
-				}
-				istringstream iss(argv[argIndex]);
-				int prefilterSpikes;
-				iss >> prefilterSpikes;
-				if(prefilterSpikes != 0 && prefilterSpikes != 1)
-				{
-					cout << "ERROR in program arguments: expecting 0 or 1 after '-p'" << endl;
-					return false;
-				}
-				o_rProgramArguments.m_prefilterSpikes = (prefilterSpikes==1);
-			}
-			else if (strcmp(argv[argIndex], "--p-factor") == 0)
-			{
-				argIndex++;
-				if (argIndex == argc)
-				{
-					cout << "ERROR in program arguments: expecting standard deviation factor for spike prefiltering threshold after '--p-factor'" << endl;
-					return false;
-				}
-				istringstream iss(argv[argIndex]);
-				iss >> o_rProgramArguments.m_prefilterThresholdStDevFactor;
-			}
-			else if(strcmp(argv[argIndex], "-m") == 0)
-			{
-				argIndex++;
-				if(argIndex == argc)
-				{
-					cout << "ERROR in program arguments: expecting float in [0,1] after '-m'" << endl;
-					return false;
-				}
-				istringstream iss(argv[argIndex]);
-				float markedPixelsSkippingProbability;
-				iss >> markedPixelsSkippingProbability;
-				if(markedPixelsSkippingProbability < 0 || markedPixelsSkippingProbability > 1)
-				{
-					cout << "ERROR in program arguments: expecting float in [0,1] after '-m'" << endl;
-					return false;
-				}
-				o_rProgramArguments.m_markedPixelsSkippingProbability = markedPixelsSkippingProbability;
-			}
-			else if(strcmp(argv[argIndex], "-s") == 0)
-			{
-				argIndex++;
-				if (argIndex == argc)
-				{
-					cout << "ERROR in program arguments: expecting number of scales after '-s'" << endl;
-					return false;
-				}
-				istringstream iss(argv[argIndex]);
-				iss >> o_rProgramArguments.m_nbOfScales;
-			}
-			else if (strcmp(argv[argIndex], "--ncores") == 0)
-			{
-				argIndex++;
-				if (argIndex == argc)
-				{
-					cout << "ERROR in program arguments: expecting number of cores for OpenMP after '--ncores'" << endl;
-					return false;
-				}
-				istringstream iss(argv[argIndex]);
-				iss >> o_rProgramArguments.m_nbOfCores;
-			}
-			else if (strcmp(argv[argIndex], "--use-cuda") == 0)
-			{
-				argIndex++;
-				if (argIndex == argc)
-				{
-					cout << "ERROR in program arguments: expecting 0 or 1 after '--use-cuda'" << endl;
-					return false;
-				}
-				istringstream iss(argv[argIndex]);
-				int useCudaCode;
-				iss >> useCudaCode;
-				if(useCudaCode != 0 && useCudaCode != 1)
-				{
-					cout << "ERROR in program arguments: expecting 0 or 1 after '--use-cuda'" << endl;
-					return false;
-				}
-				o_rProgramArguments.m_useCuda = (useCudaCode == 1);
-			}
-		}
-		if(!missingColor)
-		{
-			if(missingHist)
-			{
-				string inputHistFilePath = inputColorFilePath.substr(0, inputColorFilePath.length() - 4) + "_hist.exr"; // "-4" for removing extension .exr
-				cout << "Warning: input histogram file not provided by -h argument: assuming '" + inputHistFilePath + "'" << endl;
-				Deepimf histAndNbOfSamplesImage;
-				if (!ImageIO::loadMultiChannelsEXR(histAndNbOfSamplesImage, inputHistFilePath.c_str()))
-				{
-					cout << "ERROR in program arguments: couldn't load input histogram image file '" << inputHistFilePath << "'" << endl;
-					return false;
-				}
-				Utils::separateNbOfSamplesFromHistogram(o_rProgramArguments.m_histogramImage, o_rProgramArguments.m_nbOfSamplesImage, histAndNbOfSamplesImage);
-				missingHist = false;
-			}
-			if(missingCov)
-			{
-				string inputCovFilePath = inputColorFilePath.substr(0, inputColorFilePath.length() - 4) + "_cov.exr"; // "-4" for removing extension .exr
-				cout << "Warning: input covariance file not provided by -c argument: assuming '" + inputCovFilePath + "'" << endl;
-				if (!ImageIO::loadMultiChannelsEXR(o_rProgramArguments.m_covarianceImage, inputCovFilePath.c_str()))
-				{
-					cout << "ERROR in program arguments: couldn't load input covariance matrix image file '" << inputCovFilePath << "'" << endl;
-					return false;
-				}
-				missingCov = false;
-			}
-		}
-		if (missingColor || missingHist || missingCov || missingOutput)
-		{
-			cout << "ERROR: Missing required program argument(s):";
-			if (missingColor)
-				cout << " -i";
-			if (missingHist)
-				cout << " -h";
-			if (missingCov)
-				cout << " -c";
-			if (missingOutput)
-				cout << " -o";
-			cout << endl << endl;
-			printUsage();
+		// output path
+    	programArgs.m_denoisedOutputFilePath = outputPath;
+    	std::ofstream outputFile(programArgs.m_denoisedOutputFilePath, std::ofstream::out | std::ofstream::app);
+		if(!outputFile){
+			error =  "ERROR in program arguments: cannot write output file";
 			return false;
 		}
+
+    	// input color path
+    	const char* inputColorFilePath = inputColorPath.c_str();
+    	if (!ImageIO::loadEXR(programArgs.m_colorImage, inputColorFilePath)){
+			error = "ERROR in program arguments: couldn't load input color image file";
+			return false;
+		}
+		std::cout << "Color image loaded" << "\n";
+
+    	// input histogram path
+    	Deepimf histAndNbOfSamplesImage;
+		const char* inputHistPath_ = inputHistPath.c_str();
+		if (!ImageIO::loadMultiChannelsEXR(histAndNbOfSamplesImage, inputHistPath_)){
+        	error = "ERROR in program arguments: couldn't load input histogram image file";
+			return false;
+		}
+		Utils::separateNbOfSamplesFromHistogram(programArgs.m_histogramImage, 
+      		programArgs.m_nbOfSamplesImage, histAndNbOfSamplesImage);
+		std::cout << "Histogram loaded" << "\n";
+
+    	// input covariance path
+		const char* inputCovPath = inputCovariancePath.c_str();
+    	if (!ImageIO::loadMultiChannelsEXR(programArgs.m_covarianceImage, inputCovPath)){
+			error = "ERROR in program arguments: couldn't load input covariance matrix image file";
+			return false;
+		}
+		std::cout << "Covariance loaded" << "\n";
+
+		// check optional parameters
+  		if(random_order != 0 && random_order != 1){
+			error = "ERROR in program arguments: expecting 0 or 1 after '-r'";
+			return false;
+		}
+  		if(spike_removal != 0 && spike_removal != 1){
+			error = "ERROR in program arguments: expecting 0 or 1 after '-p'";
+			return false;
+		}
+		if(skip_marked_patches < 0 || skip_marked_patches > 1){
+			error = "ERROR in program arguments: expecting float in [0,1] after '-m'";
+			return false;
+		}
+
+		// set optional parameters 
+		programArgs.m_histogramPatchDistanceThreshold = hist_distance;
+  		programArgs.m_markedPixelsSkippingProbability = skip_marked_patches;
+  		programArgs.m_patchRadius = patches_radius;
+  		programArgs.m_useRandomPixelOrder = random_order;
+  		programArgs.m_nbOfScales = multi_scaling;
+  		programArgs.m_minEigenValue = min_eigen_val;
+  		programArgs.m_nbOfCores = core_to_use;
+  		programArgs.m_prefilterThresholdStDevFactor = factor;	
+  		programArgs.m_prefilterSpikes = spike_removal;
+  		programArgs.m_searchWindowRadius = windows_radius;
+
+		// print info abount optional parameters values
+		std::cout << "Histogram distance set to: " << programArgs.m_histogramPatchDistanceThreshold << "\n";
+		std::cout << "Windows radius set to: " << programArgs.m_searchWindowRadius << "\n";
+		std::cout << "Patch radius set to: " << programArgs.m_patchRadius << "\n";
+		std::cout << "Min eigen value set to: " << programArgs.m_minEigenValue << "\n";
+		std::cout << "Random pixel order set to: " << programArgs.m_useRandomPixelOrder << "\n";
+		std::cout << "Prefilter spikes set to: " << programArgs.m_prefilterSpikes << "\n";
+		std::cout << "Std deviation factor set to: " << programArgs.m_prefilterThresholdStDevFactor << "\n";
+		std::cout << "Skip probability set to: " << programArgs.m_markedPixelsSkippingProbability << "\n";
+		std::cout << "Number of scales set to: " << programArgs.m_nbOfScales << "\n";
+		std::cout << "Number of cores set to: " << programArgs.m_nbOfCores << "\n";
+
 		return true;
 	}
 
-	void checkAndPutToZeroNegativeInfNaNValues(DeepImage<float>& io_rImage, bool i_verbose = false)
+  void checkAndPutToZeroNegativeInfNaNValues(DeepImage<float>& io_rImage, bool i_verbose = false)
 	{
 		using std::isnan;
 		using std::isinf;
@@ -394,7 +299,7 @@ namespace bcd
 		int height = io_rImage.getHeight();
 		int depth = io_rImage.getDepth();
 		bool hasBadValue = false;
-		vector<float> values(depth);
+		std::vector<float> values(depth);
 		float val = 0.f;
 		for (int line = 0; line < height; line++)
 			for (int col = 0; col < width; col++)
@@ -411,20 +316,16 @@ namespace bcd
 				}
 				if(hasBadValue && i_verbose)
 				{
-					cout << "Warning: strange value for pixel (line,column)=(" << line << "," << col << "): (" << values[0];
+					std::cout << "Warning: strange value for pixel (line,column)=(" << line << "," << col << "): (" << values[0];
 					for(int i = 1; i < depth; ++i)
-						cout << ", " << values[i];
-					cout << ")" << endl;
+						std::cout << ", " << values[i];
+					std::cout << ")" << std::endl;
 				}
 			}
 	}
 
-	int launchBayesianCollaborativeDenoising(int argc, const char** argv)
+  int launchBayesianCollaborativeDenoising(ProgramArguments_bcd& programArgs, std::string& error)
 	{
-		ProgramArguments programArgs;
-		if(!parseProgramArguments(argc, argv, programArgs))
-			return 1;
-
 		if(programArgs.m_prefilterSpikes)
 			SpikeRemovalFilter::filter(
 					programArgs.m_colorImage,
@@ -452,9 +353,8 @@ namespace bcd
 		parameters.m_useRandomPixelOrder = programArgs.m_useRandomPixelOrder;
 		parameters.m_markedPixelsSkippingProbability = programArgs.m_markedPixelsSkippingProbability;
 		parameters.m_nbOfCores = programArgs.m_nbOfCores;
-		parameters.m_useCuda = programArgs.m_useCuda;
 
-		unique_ptr<IDenoiser> uDenoiser = nullptr;
+		std::unique_ptr<IDenoiser> uDenoiser = nullptr;
 
 		if(programArgs.m_nbOfScales > 1)
 			uDenoiser.reset(new MultiscaleDenoiser(programArgs.m_nbOfScales));
@@ -470,35 +370,67 @@ namespace bcd
 		checkAndPutToZeroNegativeInfNaNValues(outputDenoisedColorImage);
 
 		ImageIO::writeEXR(outputDenoisedColorImage, programArgs.m_denoisedOutputFilePath.c_str());
-		cout << "Written denoised output in file " << programArgs.m_denoisedOutputFilePath.c_str() << endl;
+		std::cout << "Written denoised output in file " << programArgs.m_denoisedOutputFilePath.c_str() << std::endl;
 
 		return 0;
-	}
-
-	void pauseBeforeExit()
-	{
-		cout << "Exiting program!" << endl;
-	//	cout << endl << "Press the Enter key to exit program." << endl;
-	//	cin.get();
-	}
+	} // end bcd
 
 } // namespace bcd
 
-int main(int argc, const char** argv)
-{
-	bcd::Chronometer programTotalTime;
-	programTotalTime.start();
 
-	bcd::g_pProgramPath = argv[0];
-	int rc; // return code
+int main(int argc, const char* argv[]) {
+  // command line parameters
+  auto output = "out.png"s;
+  auto input = "img.hdr"s;
+  auto hist_distance = 1.f;
+  auto windows_radius = 6;
+  auto patches_radius = 1;
+  auto random_order = 1; 
+  auto spike_removal = 1; 
+  auto factor = 2.f;
+  auto skip_marked_patches = 1.f;
+  auto multi_scaling = 3;
+  auto core_to_use = 0;
+  auto min_eigen_val = 1.e-8f;
 
-	rc = bcd::launchBayesianCollaborativeDenoising(argc, argv);
+  // parse command line
+  auto cli = cli::make_cli("yimgdenoise", "Denoise images");
+  add_option(cli, "--output,-o", output, "output image filename", true);
+  add_option(cli, "filename", input, "input image filename", true);
+  add_option(cli, "-d", hist_distance, "histogram patch distance threshold");
+  add_option(cli, "-b", windows_radius, "radius of search windows");
+  add_option(cli, "-w", patches_radius, "radius of patches");
+  add_option(cli, "-r", random_order, "1 for random pixel order");
+  add_option(cli, "-p", spike_removal, "1 for spike removal prefiltering");
+  add_option(cli, "--p-factor", factor, "factor that is multiplied by standard deviation to get the threshold for classifying spikes during prefiltering. Put lower value to remove more spikes");
+  add_option(cli, "-m", skip_marked_patches, "probability of skipping marked centers of denoised patches. 1 accelerates a lot the computations. 0 helps removing potential grid artifacts");
+  add_option(cli, "-s", multi_scaling, "number of Scales for Multi-Scaling");
+  add_option(cli, "--ncores", core_to_use, "number of cores used by OpenMP");
+  add_option(cli, "-e", min_eigen_val, "minimum eigen value for matrix inversion");
+  parse_cli(cli, argc, argv);
+  
+  auto error  = ""s;
 
-	programTotalTime.stop();
-	cout << "Program total time: ";
-	programTotalTime.printElapsedTime();
-	cout << endl;
+  //raw2bcd
+  int rc = bcd::convertRawToBcd(input, output, error);
+  if(rc == 1)
+    cli::print_fatal(error);
 
-	bcd::pauseBeforeExit();
-	return rc;
+  std::cout << "Conversion done" << "\n";
+
+  
+  //bcd 
+  bcd::ProgramArguments_bcd programArgs_;
+  if(!bcd::parseBcdArguments(programArgs_, error, output, hist_distance, windows_radius, patches_radius, random_order,
+  							spike_removal, factor, skip_marked_patches, multi_scaling, core_to_use, min_eigen_val))
+	cli::print_fatal(error);
+
+  rc = bcd::launchBayesianCollaborativeDenoising(programArgs_, error);
+  if(rc == 1)
+    cli::print_fatal(error);
+
+  std::cout << "Image denoised!" << std::endl;
+
+  // done
+  return rc;
 }

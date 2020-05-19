@@ -207,12 +207,17 @@ namespace bcd
 		srand(static_cast<unsigned int>(time(0)));
 	}
 
-  	bool parseProgramArguments_bcd(std::string outputPath, std::string inputColorPath, std::string inputHistPath, 
-    	std::string inputCovariancePath, ProgramArguments_bcd& o_rProgramArguments, std::string& error, ProgramArguments_bcd& programArgs_)
+	bool parseBcdArguments(ProgramArguments_bcd& programArgs, std::string& error, std::string output, float hist_distance, int windows_radius, int patches_radius, 
+		int random_order, int spike_removal, float factor, float skip_marked_patches, int multi_scaling, int core_to_use, float min_eigen_val)
 	{
-    	// output path
-    	o_rProgramArguments.m_denoisedOutputFilePath = outputPath;
-    	std::ofstream outputFile(o_rProgramArguments.m_denoisedOutputFilePath, std::ofstream::out | std::ofstream::app);
+		std::string outputPath = "out/denoised_image.exr";
+  		std::string inputColorPath = output + ".exr";
+  		std::string inputHistPath = output + "_hist" + ".exr";
+  		std::string inputCovariancePath = output + "_cov" + ".exr";
+
+		// output path
+    	programArgs.m_denoisedOutputFilePath = outputPath;
+    	std::ofstream outputFile(programArgs.m_denoisedOutputFilePath, std::ofstream::out | std::ofstream::app);
 		if(!outputFile){
 			error =  "ERROR in program arguments: cannot write output file";
 			return false;
@@ -220,7 +225,7 @@ namespace bcd
 
     	// input color path
     	const char* inputColorFilePath = inputColorPath.c_str();
-    	if (!ImageIO::loadEXR(o_rProgramArguments.m_colorImage, inputColorFilePath)){
+    	if (!ImageIO::loadEXR(programArgs.m_colorImage, inputColorFilePath)){
 			error = "ERROR in program arguments: couldn't load input color image file";
 			return false;
 		}
@@ -233,49 +238,55 @@ namespace bcd
         	error = "ERROR in program arguments: couldn't load input histogram image file";
 			return false;
 		}
-		Utils::separateNbOfSamplesFromHistogram(o_rProgramArguments.m_histogramImage, 
-      		o_rProgramArguments.m_nbOfSamplesImage, histAndNbOfSamplesImage);
+		Utils::separateNbOfSamplesFromHistogram(programArgs.m_histogramImage, 
+      		programArgs.m_nbOfSamplesImage, histAndNbOfSamplesImage);
 		std::cout << "Histogram loaded" << "\n";
 
     	// input covariance path
 		const char* inputCovPath = inputCovariancePath.c_str();
-    	if (!ImageIO::loadMultiChannelsEXR(o_rProgramArguments.m_covarianceImage, inputCovPath)){
+    	if (!ImageIO::loadMultiChannelsEXR(programArgs.m_covarianceImage, inputCovPath)){
 			error = "ERROR in program arguments: couldn't load input covariance matrix image file";
 			return false;
 		}
 		std::cout << "Covariance loaded" << "\n";
 
-    	// optional parameters
+		// check optional parameters
+  		if(random_order != 0 && random_order != 1){
+			error = "ERROR in program arguments: expecting 0 or 1 after '-r'";
+			return false;
+		}
+  		if(spike_removal != 0 && spike_removal != 1){
+			error = "ERROR in program arguments: expecting 0 or 1 after '-p'";
+			return false;
+		}
+		if(skip_marked_patches < 0 || skip_marked_patches > 1){
+			error = "ERROR in program arguments: expecting float in [0,1] after '-m'";
+			return false;
+		}
 
-		o_rProgramArguments.m_histogramPatchDistanceThreshold = programArgs_.m_histogramPatchDistanceThreshold;
-		std::cout << "Histogram distance set to: " << o_rProgramArguments.m_histogramPatchDistanceThreshold << "\n";
+		// set optional parameters 
+		programArgs.m_histogramPatchDistanceThreshold = hist_distance;
+  		programArgs.m_markedPixelsSkippingProbability = skip_marked_patches;
+  		programArgs.m_patchRadius = patches_radius;
+  		programArgs.m_useRandomPixelOrder = random_order;
+  		programArgs.m_nbOfScales = multi_scaling;
+  		programArgs.m_minEigenValue = min_eigen_val;
+  		programArgs.m_nbOfCores = core_to_use;
+  		programArgs.m_prefilterThresholdStDevFactor = factor;	
+  		programArgs.m_prefilterSpikes = spike_removal;
+  		programArgs.m_searchWindowRadius = windows_radius;
 
-		o_rProgramArguments.m_searchWindowRadius = programArgs_.m_searchWindowRadius;
-		std::cout << "Windows radius set to: " << o_rProgramArguments.m_searchWindowRadius << "\n";
-    
-		o_rProgramArguments.m_patchRadius = programArgs_.m_patchRadius;
-		std::cout << "Patch radius set to: " << o_rProgramArguments.m_patchRadius << "\n";
-
-		o_rProgramArguments.m_minEigenValue = programArgs_.m_minEigenValue;
-		std::cout << "Min eigen value set to: " << o_rProgramArguments.m_minEigenValue << "\n";
-
-		o_rProgramArguments.m_useRandomPixelOrder = programArgs_.m_useRandomPixelOrder;
-		std::cout << "Random pixel order set to: " << o_rProgramArguments.m_useRandomPixelOrder << "\n";
-
-		o_rProgramArguments.m_prefilterSpikes = programArgs_.m_prefilterSpikes;
-		std::cout << "Prefilter spikes set to: " << o_rProgramArguments.m_prefilterSpikes << "\n";
-
-		o_rProgramArguments.m_prefilterThresholdStDevFactor = programArgs_.m_prefilterThresholdStDevFactor;
-		std::cout << "Std deviation factor set to: " << o_rProgramArguments.m_prefilterThresholdStDevFactor << "\n";
-
-		o_rProgramArguments.m_markedPixelsSkippingProbability = programArgs_.m_markedPixelsSkippingProbability;
-		std::cout << "Skip probability set to: " << o_rProgramArguments.m_markedPixelsSkippingProbability << "\n";
-
-		o_rProgramArguments.m_nbOfScales = programArgs_.m_nbOfScales;
-		std::cout << "Number of scales set to: " << o_rProgramArguments.m_nbOfScales << "\n";
-
-		o_rProgramArguments.m_nbOfCores = programArgs_.m_nbOfCores;
-		std::cout << "Number of cores set to: " << o_rProgramArguments.m_nbOfCores << "\n";
+		// print info abount optional parameters values
+		std::cout << "Histogram distance set to: " << programArgs.m_histogramPatchDistanceThreshold << "\n";
+		std::cout << "Windows radius set to: " << programArgs.m_searchWindowRadius << "\n";
+		std::cout << "Patch radius set to: " << programArgs.m_patchRadius << "\n";
+		std::cout << "Min eigen value set to: " << programArgs.m_minEigenValue << "\n";
+		std::cout << "Random pixel order set to: " << programArgs.m_useRandomPixelOrder << "\n";
+		std::cout << "Prefilter spikes set to: " << programArgs.m_prefilterSpikes << "\n";
+		std::cout << "Std deviation factor set to: " << programArgs.m_prefilterThresholdStDevFactor << "\n";
+		std::cout << "Skip probability set to: " << programArgs.m_markedPixelsSkippingProbability << "\n";
+		std::cout << "Number of scales set to: " << programArgs.m_nbOfScales << "\n";
+		std::cout << "Number of cores set to: " << programArgs.m_nbOfCores << "\n";
 
 		return true;
 	}
@@ -313,13 +324,8 @@ namespace bcd
 			}
 	}
 
-  int launchBayesianCollaborativeDenoising(std::string outputPath, std::string inputColorPath, std::string inputHistPath, 
-    std::string inputCovariancePath, std::string& error, ProgramArguments_bcd& programArgs_)
+  int launchBayesianCollaborativeDenoising(ProgramArguments_bcd& programArgs, std::string& error)
 	{
-		ProgramArguments_bcd programArgs;
-		if(!parseProgramArguments_bcd(outputPath, inputColorPath, inputHistPath, inputCovariancePath, programArgs, error, programArgs_))
-			return 1;
-
 		if(programArgs.m_prefilterSpikes)
 			SpikeRemovalFilter::filter(
 					programArgs.m_colorImage,
@@ -403,52 +409,25 @@ int main(int argc, const char* argv[]) {
   add_option(cli, "-e", min_eigen_val, "minimum eigen value for matrix inversion");
   parse_cli(cli, argc, argv);
   
-  auto ioerror  = ""s;
-
-  // check optional parameters
-  if(random_order != 0 && random_order != 1)
-	cli::print_fatal("ERROR in program arguments: expecting 0 or 1 after '-r'");
-  if(spike_removal != 0 && spike_removal != 1)
-	cli::print_fatal("ERROR in program arguments: expecting 0 or 1 after '-p'");
-  if(skip_marked_patches < 0 || skip_marked_patches > 1)
-	cli::print_fatal("ERROR in program arguments: expecting float in [0,1] after '-m'");
-  
-  bcd::Chronometer programTotalTime; 
-  programTotalTime.start();
+  auto error  = ""s;
 
   //raw2bcd
-  int rc = bcd::convertRawToBcd(input, output, ioerror);
-
+  int rc = bcd::convertRawToBcd(input, output, error);
   if(rc == 1)
-    cli::print_fatal(ioerror);
+    cli::print_fatal(error);
 
   std::cout << "Conversion done" << "\n";
 
   
   //bcd 
-  std::string final_output = "out/denoised_image.exr";
-  std::string color_exr = output + ".exr";
-  std::string hist_exr = output + "_hist" + ".exr";
-  std::string cov_exr = output + "_cov" + ".exr";
-
-
   bcd::ProgramArguments_bcd programArgs_;
-  programArgs_.m_histogramPatchDistanceThreshold = hist_distance;
-  programArgs_.m_markedPixelsSkippingProbability = skip_marked_patches;
-  programArgs_.m_patchRadius = patches_radius;
-  programArgs_.m_useRandomPixelOrder = random_order;
-  programArgs_.m_nbOfScales = multi_scaling;
-  programArgs_.m_minEigenValue = min_eigen_val;
-  programArgs_.m_nbOfCores = core_to_use;
-  programArgs_.m_prefilterThresholdStDevFactor = factor;	
-  programArgs_.m_prefilterSpikes = spike_removal;
-  programArgs_.m_searchWindowRadius = windows_radius;
+  if(!bcd::parseBcdArguments(programArgs_, error, output, hist_distance, windows_radius, patches_radius, random_order,
+  							spike_removal, factor, skip_marked_patches, multi_scaling, core_to_use, min_eigen_val))
+	cli::print_fatal(error);
 
-  rc = bcd::launchBayesianCollaborativeDenoising(final_output, color_exr, hist_exr, cov_exr, ioerror, programArgs_);
-
-
-  programTotalTime.stop();
-  programTotalTime.printElapsedTime();
+  rc = bcd::launchBayesianCollaborativeDenoising(programArgs_, error);
+  if(rc == 1)
+    cli::print_fatal(error);
 
   std::cout << "Image denoised!" << std::endl;
 

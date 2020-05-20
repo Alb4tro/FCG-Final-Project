@@ -67,8 +67,8 @@ float compute_weight(img::image<vec4f>& img,  vec2i q_coords, int radius, float 
 }
 
 //implementation of pixelwise non-local means denoiser
-void pixelwise_NLM(img::image<vec4f>& img, img::image<vec4f>& output, int radius,
-            float h_filter, float sigma){
+void pixelwise_NLM(img::image<vec4f>& img, img::image<vec4f>& output, int radius, 
+            int big_radius, float h_filter, float sigma){
     
     //image size
     auto w = img.size().x;
@@ -89,12 +89,12 @@ void pixelwise_NLM(img::image<vec4f>& img, img::image<vec4f>& output, int radius
             //get the pixel
             auto& p = img[{i,j}];
 
-            //computing the window of p of radius r
+            //computing the window of p of radius big_r
             //clamp to avoid index out of bound
-            auto start_horizontal = clamp(i - radius, 0, w - 1);
-            auto end_horizontal   = clamp(i + radius, 0, w - 1);
-            auto start_vertical   = clamp(j - radius, 0, h - 1);
-            auto end_vertical     = clamp(j + radius, 0, h - 1);
+            auto start_horizontal = clamp(i - big_radius, 0, w - 1);
+            auto end_horizontal   = clamp(i + big_radius, 0, w - 1);
+            auto start_vertical   = clamp(j - big_radius, 0, h - 1);
+            auto end_vertical     = clamp(j + big_radius, 0, h - 1);
 
             //C(p)
             auto c = 0.0f;
@@ -133,7 +133,8 @@ int main(int argc, const char* argv[]) {
     //params
     auto input_path = ""s;
     auto output_path = ""s;
-    auto radius = 0;
+    auto patch_r = 0;
+    auto big_r = 0;
     auto h= 0.0f;
     auto sigma = 0.0f;
     
@@ -141,7 +142,8 @@ int main(int argc, const char* argv[]) {
     auto cli = cli::make_cli("nlm_denoiser", "Non-local means denoiser");
     add_option(cli, "--input", input_path, "Input path");
     add_option(cli, "--output", output_path, "Output path");
-    add_option(cli, "--radius", radius, "radius");
+    add_option(cli, "--patch_r", patch_r, "Patch radius");
+    add_option(cli, "--big_r", big_r, "Window radius");
     add_option(cli, "--h", h, "h");
     add_option(cli, "--sigma", sigma, "sigma");
     parse_cli(cli, argc, argv);
@@ -170,7 +172,7 @@ int main(int argc, const char* argv[]) {
     std::cout << "Processing..." << std::endl;
 
     //apply the algorithm
-    pixelwise_NLM(img, output, radius, h_filter, sigma);
+    pixelwise_NLM(img, output, patch_r, big_r, h_filter, sigma);
 
     //saving image
     std::cout << "Saving " + output_path << std::endl;

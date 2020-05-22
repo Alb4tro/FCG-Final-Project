@@ -272,19 +272,25 @@ int main(int argc, const char* argv[]) {
   cli::print_progress("render image", params.samples, params.samples);
 
   // save image
-  cli::print_progress("save image", 0, 1);
+  //cli::print_progress("save image", 0, 1);
   if (!save_image(imfilename, state->render, ioerror)) cli::print_fatal(ioerror);
 
-  std::ofstream binaryFile;
+  cli::print_info("qui ci arrivo!");
+
   int x = state->pixels.size().x;
   int y = state->pixels.size().y;
   Header header = {0, x, y, params.samples, 4, 0};
-  binaryFile.open("file.raw", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
+  std::ofstream binaryFile ("out/file.raw", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
+  
+  if(!binaryFile){
+			cli::print_fatal("Error: cannat write output file!");
+	}
+
   binaryFile.write((char*)&header, sizeof(header));
   binaryFile.write((char*)state->pixels.data(), sizeof(state->pixels.data()));
   binaryFile.close();
 
-  cli::print_progress("save image", 1, 1);
+  //cli::print_progress("save image", 1, 1);
 
   // done
   return 0;

@@ -1460,6 +1460,10 @@ vec4f trace_sample(ptr::state* state, const ptr::scene* scene,
   if (!isfinite(xyz(shaded))) xyz(shaded) = zero3f;
   if (max(xyz(shaded)) > params.clamp)
     xyz(shaded) = xyz(shaded) * (params.clamp / max(xyz(shaded)));
+  
+
+  state->samples[pixel.samples][ij] = shaded; 
+
   pixel.accumulated += shaded;
   pixel.samples += 1;
   return pixel.accumulated / pixel.samples;
@@ -1716,6 +1720,10 @@ void init_state(ptr::state* state, const ptr::scene* scene,
                 params.resolution};
   state->pixels.assign(image_size, pixel{});
   state->render.assign(image_size, zero4f);
+  state->samples = std::vector<img::image<vec4f>>(params.samples);
+  for (auto& sample : state->samples){
+    sample.assign(image_size, zero4f);
+  }
   auto rng = make_rng(1301081);
   for (auto& pixel : state->pixels) {
     pixel.rng = make_rng(params.seed, rand1i(rng, 1 << 31) / 2 + 1);

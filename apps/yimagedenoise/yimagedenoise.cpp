@@ -418,8 +418,6 @@ int main(int argc, const char* argv[]) {
     cli::print_fatal(error);
 
   std::cout << "Conversion done" << "\n";
-
-  remove(input.c_str());
   
   //bcd 
   bcd::ProgramArguments_bcd programArgs_;

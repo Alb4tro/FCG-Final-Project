@@ -255,6 +255,7 @@ int main(int argc, const char* argv[]) {
 
   // render
   cli::print_progress("render image", 0, params.samples);
+
   for(auto sample = 0; sample < params.samples; sample ++) {
     cli::print_progress("render image", sample, params.samples);
     trace_samples(state, scene, camera, params);
@@ -285,18 +286,18 @@ int main(int argc, const char* argv[]) {
   auto vec = std::vector<float>{};
   for(int j = 0; j <  y ; j++){
     for(int i = 0; i < x; i++){
-      auto p = state->render[{i,j}];
-      vec.push_back(p.x);
-      vec.push_back(p.y);
-      vec.push_back(p.z);
-      vec.push_back(p.w);
+      for(int s = 0; s < params.samples; s++){
+        auto p = state->samples[s][{i,j}];
+        vec.push_back(p.x);
+        vec.push_back(p.y);
+        vec.push_back(p.z);
+        vec.push_back(p.w);
+      } 
     }
   }
 
+  RawFileHeader header = {(int32_t) 1,(int32_t) x,(int32_t) y, (int32_t)  params.samples, (int32_t)  4};
 
-
-  RawFileHeader header = {(int32_t) 1,(int32_t) x,(int32_t) y, (int32_t)  128, (int32_t)  4};
-  printf("%d", params.samples);
   std::ofstream binaryFile ("out/file.raw", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
   
   if(!binaryFile){

@@ -395,6 +395,7 @@ struct pixel {
 struct state {
   img::image<vec4f> render = {};
   img::image<pixel> pixels = {};
+  std::vector<img::image<vec4f>> samples;
 };
 
 }  // namespace yocto::pathtrace

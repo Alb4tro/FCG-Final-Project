@@ -15,9 +15,6 @@ namespace sio = yocto::sceneio;
 namespace shp = yocto::shape;
 namespace img  = yocto::image;
 
-double e = 2.7182818284590;
-float ef = (float) e;
-
 
 float compute_neighborhood_mean(img::image<vec4f> &img, vec2i& pix_coords, int radius){
 
@@ -58,9 +55,9 @@ float compute_weight(img::image<vec4f>& img,  vec2i q_coords, int radius, float 
     float distance = pow(compute_neighborhood_mean(img, q_coords, radius) - bp, 2);
     
     //apply gaussian weighting
-    auto exp = -max(distance - 2.0f * pow(sigma, 2), 0.0f) / pow(h_filter, 2);
+    auto exponent = -max(distance - 2.0f * pow(sigma, 2), 0.0f) / pow(h_filter, 2);
 
-    float weight = pow(e, exp);
+    float weight = exp((double)exponent);
 
     //done
     return weight;

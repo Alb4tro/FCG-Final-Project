@@ -32,6 +32,17 @@
 #include <yocto/yocto_shape.h>
 #include <yocto/yocto_sceneio.h>
 #include <yocto_pathtrace/yocto_pathtrace.h>
+#include <fstream>
+
+typedef struct {
+   int version;
+   int xres;
+   int yres;
+   int num_samples;
+   int num_channels;
+   float data[1];
+} Header;
+
 using namespace yocto::math;
 namespace ptr = yocto::pathtrace;
 namespace cli = yocto::commonio;
@@ -263,6 +274,16 @@ int main(int argc, const char* argv[]) {
   // save image
   cli::print_progress("save image", 0, 1);
   if (!save_image(imfilename, state->render, ioerror)) cli::print_fatal(ioerror);
+
+  std::ofstream binaryFile;
+  int x = state->pixels.size().x;
+  int y = state->pixels.size().y;
+  Header header = {0, x, y, params.samples, 4, 0};
+  binaryFile.open("file.raw", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
+  binaryFile.write((char*)&header, sizeof(header));
+  binaryFile.write((char*)state->pixels.data(), sizeof(state->pixels.data()));
+  binaryFile.close();
+
   cli::print_progress("save image", 1, 1);
 
   // done

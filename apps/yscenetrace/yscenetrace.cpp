@@ -34,14 +34,13 @@
 #include <yocto_pathtrace/yocto_pathtrace.h>
 #include <fstream>
 
-typedef struct {
-   int version;
-   int xres;
-   int yres;
-   int num_samples;
-   int num_channels;
-   float data[1];
-} Header;
+typedef struct{
+		int32_t version;
+		int32_t width;
+		int32_t height;
+		int32_t nbOfSamples;
+		int32_t nbOfChannels;
+} RawFileHeader;
 
 using namespace yocto::math;
 namespace ptr = yocto::pathtrace;
@@ -294,7 +293,10 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  Header header = {0, x, y, params.samples, 4, 0};
+
+
+  RawFileHeader header = {(int32_t) 1,(int32_t) x,(int32_t) y, (int32_t)  1, (int32_t)  4};
+  printf("%d", params.samples);
   std::ofstream binaryFile ("out/file.raw", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
   
   if(!binaryFile){

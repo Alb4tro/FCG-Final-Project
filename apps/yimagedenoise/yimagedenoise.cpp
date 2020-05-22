@@ -22,6 +22,7 @@
 #include <cstdlib>
 #include <memory>
 #include <numeric>
+#include <stdio.h>
 
 using namespace yocto::math;
 namespace img = yocto::image;
@@ -418,6 +419,7 @@ int main(int argc, const char* argv[]) {
 
   std::cout << "Conversion done" << "\n";
 
+  remove(input.c_str());
   
   //bcd 
   bcd::ProgramArguments_bcd programArgs_;

@@ -295,7 +295,7 @@ int main(int argc, const char* argv[]) {
 
 
 
-  RawFileHeader header = {(int32_t) 1,(int32_t) x,(int32_t) y, (int32_t)  1, (int32_t)  4};
+  RawFileHeader header = {(int32_t) 1,(int32_t) x,(int32_t) y, (int32_t)  128, (int32_t)  4};
   printf("%d", params.samples);
   std::ofstream binaryFile ("out/file.raw", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
   

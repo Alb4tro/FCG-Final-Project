@@ -272,25 +272,38 @@ int main(int argc, const char* argv[]) {
   cli::print_progress("render image", params.samples, params.samples);
 
   // save image
-  //cli::print_progress("save image", 0, 1);
+  cli::print_progress("save image", 0, 1);
   if (!save_image(imfilename, state->render, ioerror)) cli::print_fatal(ioerror);
+  cli::print_progress("save image", 1, 1);
 
   cli::print_info("qui ci arrivo!");
 
-  int x = state->pixels.size().x;
-  int y = state->pixels.size().y;
+  int x = state->render.size().x;
+  int y = state->render.size().y;
+  //printf("%i %i", x, y);
+  
+
+  auto vec = std::vector<float>{};
+  for(int j = 0; j <  y ; j++){
+    for(int i = 0; i < x; i++){
+      auto p = state->render[{i,j}];
+      vec.push_back(p.x);
+      vec.push_back(p.y);
+      vec.push_back(p.z);
+      vec.push_back(p.w);
+    }
+  }
+
   Header header = {0, x, y, params.samples, 4, 0};
   std::ofstream binaryFile ("out/file.raw", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
   
   if(!binaryFile){
 			cli::print_fatal("Error: cannat write output file!");
 	}
-
   binaryFile.write((char*)&header, sizeof(header));
-  binaryFile.write((char*)state->pixels.data(), sizeof(state->pixels.data()));
+  binaryFile.write((char*)&vec[0], vec.size() * sizeof(float));
   binaryFile.close();
 
-  //cli::print_progress("save image", 1, 1);
 
   // done
   return 0;

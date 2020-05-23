@@ -57,7 +57,7 @@ float compute_weight(img::image<vec4f>& img,  vec2i q_coords, int radius, float 
     //apply gaussian weighting
     auto exponent = -max(distance - 2.0f * pow(sigma, 2), 0.0f) / pow(h_filter, 2);
 
-    float weight = exp((double)exponent);
+    float weight = expf(exponent);
 
     //done
     return weight;

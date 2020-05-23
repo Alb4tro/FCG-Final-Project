@@ -16,7 +16,7 @@ namespace shp = yocto::shape;
 namespace img  = yocto::image;
 
 
-float compute_neighborhood_mean(img::image<vec4f> &img, vec2i& pix_coords, int radius){
+vec4f compute_neighborhood_mean(img::image<vec4f> &img, vec2i& pix_coords, int radius){
 
     //params
     auto i = pix_coords.x;
@@ -29,14 +29,14 @@ float compute_neighborhood_mean(img::image<vec4f> &img, vec2i& pix_coords, int r
     auto end_vertical     = clamp(j + radius, 0, h - 1);
 
     //mean
-    auto mean = 0.0f;
+    auto mean = vec4f{};
     auto count = 0;
 
     for(auto k = start_vertical; k < end_vertical; k++){
         for(auto l = start_horizontal; l < end_horizontal; l++){
             auto& p = img[{l,k}];
-            mean += (p.x + p.y + p.z)*255;
-            count+=3;
+            mean += p * 255;
+            count++;
         }
     }
 
@@ -48,11 +48,11 @@ float compute_neighborhood_mean(img::image<vec4f> &img, vec2i& pix_coords, int r
 }
 
 //gaussian weighting function
-float compute_weight(img::image<vec4f>& img,  vec2i q_coords, int radius, float bp,
+float compute_weight(img::image<vec4f>& img,  vec2i q_coords, int radius, vec4f bp,
             float h_filter, float sigma){
     
     //compute euclidean distance
-    float distance = pow(compute_neighborhood_mean(img, q_coords, radius) - bp, 2);
+    float distance = pow(length(compute_neighborhood_mean(img, q_coords, radius) - bp), 2);
     
     //apply gaussian weighting
     auto exponent = -max(distance - 2.0f * pow(sigma, 2), 0.0f) / pow(h_filter, 2);

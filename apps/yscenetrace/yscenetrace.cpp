@@ -276,12 +276,8 @@ int main(int argc, const char* argv[]) {
   if (!save_image(imfilename, state->render, ioerror)) cli::print_fatal(ioerror);
   cli::print_progress("save image", 1, 1);
 
-  cli::print_info("qui ci arrivo!");
-
   int x = state->render.size().x;
-  int y = state->render.size().y;
-  //printf("%i %i", x, y);
-  
+  int y = state->render.size().y; 
 
   auto vec = std::vector<float>{};
   for(int j = 0; j <  y ; j++){
@@ -306,7 +302,6 @@ int main(int argc, const char* argv[]) {
   binaryFile.write((char*)&header, sizeof(header));
   binaryFile.write((char*)&vec[0], vec.size() * sizeof(float));
   binaryFile.close();
-
 
   // done
   return 0;

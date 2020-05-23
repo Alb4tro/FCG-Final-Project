@@ -211,7 +211,7 @@ namespace bcd
 	bool parseBcdArguments(ProgramArguments_bcd& programArgs, std::string& error, std::string output, float hist_distance, int windows_radius, int patches_radius, 
 		int random_order, int spike_removal, float factor, float skip_marked_patches, int multi_scaling, int core_to_use, float min_eigen_val)
 	{
-		std::string outputPath = "out/denoised_image.exr";
+		std::string outputPath = output + "_denoised.exr";
   		std::string inputColorPath = output + ".exr";
   		std::string inputHistPath = output + "_hist" + ".exr";
   		std::string inputCovariancePath = output + "_cov" + ".exr";
@@ -376,6 +376,16 @@ namespace bcd
 		return 0;
 	} // end bcd
 
+	void cleanTempFiles(std::string output)
+	{
+		std::string inputColorPath = output + ".exr";
+  		std::string inputHistPath = output + "_hist" + ".exr";
+  		std::string inputCovariancePath = output + "_cov" + ".exr";
+		
+		remove(inputColorPath.c_str());
+		remove(inputCovariancePath.c_str());
+		remove(inputHistPath.c_str());
+	}	
 } // namespace bcd
 
 
@@ -426,10 +436,14 @@ int main(int argc, const char* argv[]) {
 	cli::print_fatal(error);
 
   rc = bcd::launchBayesianCollaborativeDenoising(programArgs_, error);
+  bcd::cleanTempFiles(output);
+  
   if(rc == 1)
     cli::print_fatal(error);
 
   std::cout << "Image denoised!" << std::endl;
+
+
 
   // done
   return rc;

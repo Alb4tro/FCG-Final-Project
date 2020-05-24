@@ -297,7 +297,7 @@ int main(int argc, const char* argv[]) {
   std::ofstream binaryFile ("out/file.raw", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
   
   if(!binaryFile){
-			cli::print_fatal("Error: cannat write output file!");
+			cli::print_fatal("Error: cannot write output file!");
 	}
   binaryFile.write((char*)&header, sizeof(header));
   binaryFile.write((char*)&vec[0], vec.size() * sizeof(float));

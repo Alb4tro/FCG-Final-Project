@@ -371,6 +371,16 @@ namespace bcd
 		checkAndPutToZeroNegativeInfNaNValues(outputDenoisedColorImage);
 
 		ImageIO::writeEXR(outputDenoisedColorImage, programArgs.m_denoisedOutputFilePath.c_str());
+
+		yocto::image::image<vec4f> image;
+		if(!load_image(programArgs.m_denoisedOutputFilePath, image, error))
+			return 1;
+		
+		std::string outpath = programArgs.m_denoisedOutputFilePath.substr(0, programArgs.m_denoisedOutputFilePath.size()-3) + "png"; 
+
+		if (!save_image(outpath, image, error))
+			return 1;
+
 		std::cout << "Written denoised output in file " << programArgs.m_denoisedOutputFilePath.c_str() << std::endl;
 
 		return 0;

@@ -15,56 +15,45 @@ namespace sio = yocto::sceneio;
 namespace shp = yocto::shape;
 namespace img  = yocto::image;
 
+//compute euclidean distance
+float distance_patches(img::image<vec4f> &img, vec2i& pcoords, vec2i& qcoords, int r){
 
-vec4f compute_neighborhood_mean(img::image<vec4f> &img, vec2i& pix_coords, int radius){
+    auto pi = pcoords.x;
+    auto pj = pcoords.y;
+    auto qi = qcoords.x;
+    auto qj = qcoords.y;
 
-    //params
-    auto i = pix_coords.x;
-    auto j = pix_coords.y;
-    auto w = img.size().x;
-    auto h = img.size().y;
-    auto start_horizontal = clamp(i - radius, 0, w - 1);
-    auto end_horizontal   = clamp(i + radius, 0, w - 1);
-    auto start_vertical   = clamp(j - radius, 0, h - 1);
-    auto end_vertical     = clamp(j + radius, 0, h - 1);
+    auto d = 0.0f;
 
-    //mean
-    auto mean = vec4f{};
-    auto count = 0;
-
-    for(auto k = start_vertical; k < end_vertical; k++){
-        for(auto l = start_horizontal; l < end_horizontal; l++){
-            auto& p = img[{l,k}];
-            mean += p * 255;
-            count++;
+    for(auto rj = -r; rj <= r; rj++){
+        for(auto ri = -r; ri <= r ; ri++){
+            if(!img.contains({qi + ri, qj + rj})) continue;
+            if(!img.contains({pi + ri, pj + rj})) continue;
+            auto p = img[{pi + ri, pj + rj}] * 255;
+            auto q = img[{qi + ri, qj + rj}] * 255;
+            
+            d += distance_squared({p.x, p.y, p.z},{q.x, q.y, q.z});
         }
     }
-
-    //security check
-    if(count > 0) mean/=count;
+    d/= (2.0f * pow(r + 1.0f, 2));
 
     //done
-    return mean;
+    return d;
 }
 
 //gaussian weighting function
-float compute_weight(img::image<vec4f>& img,  vec2i q_coords, int radius, vec4f bp,
-            float h_filter, float sigma){
-    
-    //compute euclidean distance
-    float distance = pow(length(compute_neighborhood_mean(img, q_coords, radius) - bp), 2);
+float compute_weight(float distance, float h_filter, float sigma){
     
     //apply gaussian weighting
     auto exponent = -max(distance - 2.0f * pow(sigma, 2), 0.0f) / pow(h_filter, 2);
-
     float weight = expf(exponent);
 
     //done
     return weight;
 }
 
-//implementation of pixelwise non-local means denoiser
-void pixelwise_NLM(img::image<vec4f>& img, img::image<vec4f>& output, int radius, 
+//implementation of non-local means denoiser
+void nlmeans(img::image<vec4f>& img, img::image<vec4f>& output, int radius, 
             int big_radius, float h_filter, float sigma){
     
     //image size
@@ -99,18 +88,16 @@ void pixelwise_NLM(img::image<vec4f>& img, img::image<vec4f>& output, int radius
             //color
             auto color = vec4f{0,0,0, 1};
 
-            //neighborhood's mean B(p,r)
-            auto bp = compute_neighborhood_mean(img, vec2i(i,j), radius);
-
-            //iterate the neighborhood
+            //iterate the search window
             for(auto k = start_vertical; k < end_vertical; k++){
                 for(auto l = start_horizontal; l < end_horizontal; l++){
 
                     //if we are in the same pixel -> skip
-                    if(k == j && l == i) continue;
+                    //if(k == j && l == i) continue;
                     //get the pixel
-                    auto& q = img[{l,k}];
-                    auto weight = compute_weight(img, vec2i{l,k}, radius, bp, h_filter, sigma);
+                    auto&q = img[{l, k}];
+                    auto d = distance_patches(img, vec2i{i, j}, vec2i{l, k}, radius);
+                    auto weight = compute_weight(d, h_filter, sigma);
                     c += weight;
                     color += q * weight;
                 }
@@ -118,6 +105,7 @@ void pixelwise_NLM(img::image<vec4f>& img, img::image<vec4f>& output, int radius
 
             //security check
             if(c > 0) color /= c;
+            color.w = 1;
 
             //update output image
             output[{i,j}] = color;
@@ -169,7 +157,7 @@ int main(int argc, const char* argv[]) {
     std::cout << "Processing..." << std::endl;
 
     //apply the algorithm
-    pixelwise_NLM(img, output, patch_r, big_r, h_filter, sigma);
+    nlmeans(img, output, patch_r, big_r, h_filter, sigma);
 
     //saving image
     std::cout << "Saving " + output_path << std::endl;

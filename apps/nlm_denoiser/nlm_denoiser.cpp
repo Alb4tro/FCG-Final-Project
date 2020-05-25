@@ -35,7 +35,7 @@ float distance_patches(img::image<vec4f> &img, vec2i& pcoords, vec2i& qcoords, i
             d += distance_squared({p.x, p.y, p.z},{q.x, q.y, q.z});
         }
     }
-    d/= (2.0f * pow(r + 1.0f, 2));
+    d/= pow(2*r + 1.0f, 2);
 
     //done
     return d;

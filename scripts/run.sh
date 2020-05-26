@@ -30,10 +30,14 @@
 #./bin/RelWithDebInfo/yimagedenoise out/file.raw -o out/bcd_denoised_images/13_kitchen_720_512
 #rm out/file.raw 
 
-./bin/RelWithDebInfo/yscenetrace tests/11_bathroom1/bathroom1.json -o out/lowres/11_bathroom_720_1024.jpg -t path -s 1024 -r 720
-./bin/RelWithDebInfo/yimagedenoise out/file.raw -o out/bcd_denoised_images/11_bathroom_720_1024
-rm out/file.raw 
+#./bin/RelWithDebInfo/yscenetrace tests/11_bathroom1/bathroom1.json -o out/lowres/11_bathroom_720_1024.jpg -t path -s 1024 -r 720
+#./bin/RelWithDebInfo/yimagedenoise out/file.raw -o out/bcd_denoised_images/11_bathroom_720_1024
+#rm out/file.raw 
 
-./bin/RelWithDebInfo/yscenetrace tests/13_bedroom/bedroom.json -o out/lowres/13_bedroom_720_1024.jpg -t path -s 1024 -r 720
-./bin/RelWithDebInfo/yimagedenoise out/file.raw -o out/bcd_denoised_images/13_bedroom_720_1024
-rm out/file.raw 
+#./bin/RelWithDebInfo/yscenetrace tests/13_bedroom/bedroom.json -o out/lowres/13_bedroom_720_1024.jpg -t path -s 1024 -r 720
+#./bin/RelWithDebInfo/yimagedenoise out/file.raw -o out/bcd_denoised_images/13_bedroom_720_1024
+#rm out/file.raw
+
+#./bin/RelWithDebInfo/yscenetrace tests/12_ecosys/ecosys.json -o out/lowres/12_ecosys_720_64.jpg -t path -s 64 -r 720
+#./bin/RelWithDebInfo/yimagedenoise out/file.raw -o out/bcd_denoised_images/12_ecosys_720_64
+#rm out/file.raw 

@@ -22,11 +22,20 @@
 #bin/RelWithDebInfo/nlm_denoiser --input out/lowres/17_kitchen_720_512.jpg --output out/nlm_denoised_images/denoised_kitchen_512_1.png --patch_r 1 --big_r 10 --h 1.5  --sigma 10
 #bin/RelWithDebInfo/nlm_denoiser --input out/lowres/17_kitchen_720_512.jpg --output out/nlm_denoised_images/denoised_kitchen_512_2.png --patch_r 1 --big_r 10 --h 2  --sigma 10
 
-
-
-
-bin/RelWithDebInfo/nlm_denoiser --input out/lowres/11_bathroom_720_1024.jpg --output out/nlm_denoised_images/denoised_bathroom_1024_1.png --patch_r 1 --big_r 10 --h 1.5  --sigma 10
+#bin/RelWithDebInfo/nlm_denoiser --input out/lowres/11_bathroom_720_1024.jpg --output out/nlm_denoised_images/denoised_bathroom_1024_1.png --patch_r 1 --big_r 10 --h 1.5  --sigma 10
 #bin/RelWithDebInfo/nlm_denoiser --input out/lowres/11_bathroom_720_512.jpg --output out/nlm_denoised_images/denoised_bathroom_512_2.png --patch_r 1 --big_r 10 --h 2  --sigma 10
 
-bin/RelWithDebInfo/nlm_denoiser --input out/lowres/13_bedroom_720_1024.jpg --output out/nlm_denoised_images/denoised_bedroom_1024_1.png --patch_r 1 --big_r 10 --h 1.5  --sigma 10
-#bin/RelWithDebInfo/nlm_denoiser --input out/lowres/13_bedroom_720_512.jpg --output out/nlm_denoised_images/denoised_bedroom_512_2.png --patch_r 1 --big_r 10 --h 2  --sigma 10
+
+#bin/RelWithDebInfo/nlm_denoiser --input out/lowres/13_bedroom_720_1024.jpg --output out/nlm_denoised_images/denoised_bedroom_1024_1.png --patch_r 1 --big_r 30 --h 2  --sigma 10
+#bin/RelWithDebInfo/nlm_denoiser --input out/lowres/13_bedroom_720_1024.jpg --output out/nlm_denoised_images/denoised_bedroom_1024_2.png --patch_r 1 --big_r 40 --h 2  --sigma 10
+#bin/RelWithDebInfo/nlm_denoiser --input out/lowres/13_bedroom_720_1024.jpg --output out/nlm_denoised_images/denoised_bedroom_1024_3.png --patch_r 1 --big_r 60 --h 2  --sigma 10
+
+
+#bin/RelWithDebInfo/nlm_denoiser --input out/lowres/13_bedroom_720_1024.jpg --output out/nlm_denoised_images/denoised_bedroom_1024_4.png --patch_r 1 --big_r 10 --h 3  --sigma 10
+
+
+# per mariella
+bin/RelWithDebInfo/nlm_denoiser --input out/lowres/13_bedroom_720_1024.jpg --output out/nlm_denoised_images/denoised_bedroom_1024_3.png --patch_r 1 --big_r 60 --h 2.5  --sigma 10
+bin/RelWithDebInfo/nlm_denoiser --input out/lowres/13_bedroom_720_1024.jpg --output out/nlm_denoised_images/denoised_bedroom_1024_4.png --patch_r 1 --big_r 60 --h 2  --sigma 12
+bin/RelWithDebInfo/nlm_denoiser --input out/lowres/13_bedroom_720_1024.jpg --output out/nlm_denoised_images/denoised_bedroom_1024_5.png --patch_r 1 --big_r 60 --h 2.5  --sigma 12
+bin/RelWithDebInfo/nlm_denoiser --input out/lowres/13_bedroom_720_1024.jpg --output out/nlm_denoised_images/denoised_bedroom_1024_6.png --patch_r 1 --big_r 60 --h 3  --sigma 10

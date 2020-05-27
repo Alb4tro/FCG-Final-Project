@@ -12,8 +12,8 @@ Versione temporanea in italiano
 Di seguito riportiamo i risultati ottenuti:
 
 Noisy image:
-![Image](out\lowres\01_cornellbox_512_256.jpg)
+![Image](out/lowres/01_cornellbox_512_256.jpg)
 Denoised image by BCD:
-![Image](out\bcd_denoised_images\01_cornellbox_512_256_denoised.png)
+![Image](out/bcd_denoised_images/01_cornellbox_512_256_denoised.png)
 Denoised image by our NLM:
-![Image](out\nlm_denoised_images\denoised_cornellbox_256_8.png)
+![Image](out/nlm_denoised_images/denoised_cornellbox_256_8.png)

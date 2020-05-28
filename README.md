@@ -1,8 +1,9 @@
-# FCG-Final-Project
+# Bayesan Collaborative Denoiser (BCD)
 
-Versione temporanea in italiano
+Alberto Maria Mongardini ...
+Daniele Passacantilli 1701011
 
-## Lavoro svolto
+## What we did
 1. Abbiamo integrato il bayesian collaborative denoising (BCD) all'interno di yocto. Per fare ciò abbiamo dovuto:
     * Inserire la libreria di BCD all'interno della directory libs
     * Modificare diversi CMakeList (anche quelli all'interno di BCD che presentavano un path assoluto)

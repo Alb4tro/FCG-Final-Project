@@ -19,39 +19,19 @@ Cornell box:
 
 ![Image](out/compare_results/cornellbox.png)
 
-
-Noisy image:
-
-![Image](out/lowres/01_cornellbox_512_256.jpg)
-
-Denoised image by our NLM with the following parameters:
+The parameters used for the NLM are the following:
 
 ```
 bin/nlm_denoiser --input out/lowres/01_cornellbox_512_256.jpg --output out/nlm_denoised_images/denoised_cornellbox_256_8.png --patch_r 2 --big_r 10 --h 3  --sigma 5
 ```
 
-![Image](out/nlm_denoised_images/denoised_cornellbox_256_8.png)
 
-Denoised image by BCD:
+QUA VA IL CAFFè
 
-![Image](out/bcd_denoised_images/01_cornellbox_512_256_denoised.png)
-
-
-
-
-Noisy image:
-
-![Image](out/lowres/16_coffee_720_256.jpg)
-
-Denoised image by our NLM with the following parameters:
+The parameters used for the NLM are the following:
 
 ```
 bin/nlm_denoiser --input out/lowres/16_coffee_720_256.jpg --output out/nlm_denoised_images/denoised_coffee_256_4.png --patch_r 1 --big_r 10 --h 2.5  --sigma 10
 ```
 
-![Image](out/nlm_denoised_images/denoised_coffee_256_4.png)
-
-Denoised image by BCD:
-
-![Image](out/bcd_denoised_images/16_coffee_720_64_denoised.png)
 

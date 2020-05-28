@@ -8,8 +8,9 @@ Daniele Passacantilli 1701011
 1. We integrated the bayesian collaborative denoising ([BCD](https://github.com/superboubek/bcd)) in Yocto/GL. In order to do that:
     * we put the BCD library in the ```/libs``` directory and edited several CMakeList files inside the BCD's directory tree, since most of them contained absolute paths
     * we wrote a new app inside the directory ```/apps``` called 'yimagedenoise'. This application performs denoising on the image given as input using the API provided by BCD
-        * the application, given a ```.raw``` file containing all the pixels and their respective samples of an image, first computes it's color histogram and covariance matrix, then uses them in order to denoise the image and the result is converted in a ```.png``` and a ```.exr``` images
-    * we slighty edited the renderer in ```/libs/yocto/yocto_pathtrace.cpp``` in order to generate the ```.raw``` required to use BCD. This library follows a certain format in which pixels of the input image must be provided, so we adapted yocto to create the input file according to specifications
+        * the application, given a ```.raw``` file containing all the pixels and their respective samples of an image, first computes its color histogram and covariance matrix, then uses them in order to denoise the image and the result is converted in a ```.png``` and a ```.exr``` images
+    * we slighty edited the renderer in ```/libs/yocto/yocto_pathtrace.cpp``` in order to generate the ```.raw``` required to use BCD
+        * the library follows a certain format in which pixels of the input image must be provided, so we adapted yocto to create the input file according to specifications
     * we handle both HDR and LDR formats, since the raw file is directly generated inside the renderer
 2. We wrote our implementation of the Non-Local Means Denoiser (NLM) following [this](https://www.ipol.im/pub/art/2011/bcm_nlm/article.pdf) paper .
 

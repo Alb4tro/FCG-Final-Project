@@ -45,3 +45,13 @@ The parameters used for the NLM are the following:
 ```
 bin/nlm_denoiser --input out/lowres/13_bedroom_720_1024.jpg --output out/nlm_denoised_images/denoised_bedroom_1024.png --patch_r 1 --big_r 60 --h 2  --sigma 10
 ```
+
+Head:
+
+![Image](out/compare_results/head.png)
+
+The parameters used for the NLM are the following:
+
+```
+bin/RelWithDebInfo/nlm_denoiser --input out/lowres/04_head_720_64.jpg --output out/nlm_denoised_images/denoised_head_720_64.png --patch_r 1 --big_r 10 --h 2  --sigma 10
+```

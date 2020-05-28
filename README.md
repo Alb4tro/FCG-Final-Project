@@ -27,6 +27,7 @@ bin/nlm_denoiser --input out/lowres/01_cornellbox_512_256.jpg --output out/nlm_d
 
 
 Coffee:
+
 ![Image](out/compare_results/coffee.png)
 
 The parameters used for the NLM are the following:
@@ -36,6 +37,7 @@ bin/nlm_denoiser --input out/lowres/16_coffee_720_256.jpg --output out/nlm_denoi
 ```
 
 Bedroom:
+
 ![Image](out/compare_results/bedroom.png)
 
 The parameters used for the NLM are the following:

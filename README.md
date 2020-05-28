@@ -41,7 +41,7 @@ Denoised image by our NLM with the following parameters:
 bin/RelWithDebInfo/nlm_denoiser --input out/lowres/16_coffee_720_256.jpg --output out/nlm_denoised_images/denoised_coffee_256_4.png --patch_r 1 --big_r 10 --h 2.5  --sigma 10
 ```
 
-![Image](out/nlm_denoised_images/denoised_16_coffee_256_4.png)
+![Image](out/nlm_denoised_images/denoised_coffee_256_4.png)
 
 Denoised image by BCD:
 

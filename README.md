@@ -1,6 +1,6 @@
 # Bayesan Collaborative Denoiser (BCD)
 
-Alberto Maria Mongardini ...  <br/>
+Alberto Maria Mongardini 1635121  <br/>
 Daniele Passacantilli 1701011
 
 ## What we did
@@ -12,6 +12,7 @@ Daniele Passacantilli 1701011
 2. We wrote our implementation of the Non-Local Means Denoiser (NLM) following [this](https://www.ipol.im/pub/art/2011/bcm_nlm/article.pdf) paper .
 
 We obtained the following results: 
+
 Noisy image:
 
 ![Image](out/lowres/01_cornellbox_512_256.jpg)

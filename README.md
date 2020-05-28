@@ -16,7 +16,8 @@ Daniele Passacantilli 1701011
 We obtained the following results:
 
 Cornell box:
-![Image](out/compare results/cornellbox.png)
+
+![Image](out/compare_results/cornellbox.png)
 
 
 Noisy image:

@@ -1,17 +1,19 @@
 # Bayesan Collaborative Denoiser (BCD)
 
-Alberto Maria Mongardini 1635121  <br/>
+Alberto Maria Mongardini 1635121
+
 Daniele Passacantilli 1701011
 
 ## What we did
-1. We integrated the bayesian collaborative denoising (BCD) in Yocto/GL. In order to do that:
+1. We integrated the bayesian collaborative denoising ([BCD](https://github.com/superboubek/bcd)) in Yocto/GL. In order to do that:
     * we put the BCD library in the ```/libs``` directory
     * we edited several CMakeList files inside the BCD's directory tree, since most of them contained absolute paths
     * we wrote a new app inside the directory ```/apps``` called 'yimagedenoise'. This application performs denoising on the image given as input using the API provided by BCD
     * we slighty edited the renderer in ```/libs/yocto/yocto_pathtrace.cpp``` in order to generate the file.raw required to use BCD. This library follows a certain format in which pixels of the input image must be provided, so we adapted yocto to create the input file according to specifications
+    * we handle both HDR and LDR formats, since the raw file is directly generated inside the renderer
 2. We wrote our implementation of the Non-Local Means Denoiser (NLM) following [this](https://www.ipol.im/pub/art/2011/bcm_nlm/article.pdf) paper .
 
-We obtained the following results: 
+We obtained the following results:
 
 Noisy image:
 

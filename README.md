@@ -16,7 +16,7 @@ Noisy image:
 
 ![Image](out/lowres/01_cornellbox_512_256.jpg)
 
-Denoised image by our NLM:
+Denoised image by our NLM with the following parameters:
 
 ```
 bin//nlm_denoiser --input out/lowres/01_cornellbox_512_256.jpg --output out/nlm_denoised_images/denoised_cornellbox_256_8.png --patch_r 2 --big_r 10 --h 3  --sigma 5

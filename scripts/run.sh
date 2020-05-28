@@ -10,6 +10,6 @@ rm out/file.raw
 ./bin/RelWithDebInfo/yimagedenoise out/file.raw -o out/bcd_denoised_images/01_cornellbox_512_256
 rm out/file.raw 
 
-./bin/RelWithDebInfo/yscenetrace tests/04_head1/head1.json -o out/lowres/04_head.jpg -t path -s 64 -r 720
-./bin/RelWithDebInfo/yimagedenoise out/file.raw -o out/bcd_denoised_images/04_head
+./bin/RelWithDebInfo/yscenetrace tests/04_head1/head1.json -o out/lowres/04_head_720_64.jpg -t path -s 64 -r 720
+./bin/RelWithDebInfo/yimagedenoise out/file.raw -o out/bcd_denoised_images/04_head_720_64
 rm out/file.raw 

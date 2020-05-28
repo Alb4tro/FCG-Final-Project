@@ -26,7 +26,8 @@ bin/nlm_denoiser --input out/lowres/01_cornellbox_512_256.jpg --output out/nlm_d
 ```
 
 
-QUA VA IL CAFFè
+Coffee:
+![Image](out/compare_results/coffee.png)
 
 The parameters used for the NLM are the following:
 

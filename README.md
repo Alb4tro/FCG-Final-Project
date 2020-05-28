@@ -12,7 +12,13 @@ Daniele Passacantilli 1701011
     * we slighty edited the renderer in ```/libs/yocto/yocto_pathtrace.cpp``` in order to generate the ```.raw``` required to use BCD
         * the library follows a certain format in which pixels of the input image must be provided, so we adapted yocto to create the input file according to specifications
     * we handle both HDR and LDR formats, since the raw file is directly generated inside the renderer
-2. We wrote our implementation of the Non-Local Means Denoiser (NLM) following [this](https://www.ipol.im/pub/art/2011/bcm_nlm/article.pdf) paper .
+2. We wrote our implementation of the Non-Local Means Denoiser (NLM) following [this](https://www.ipol.im/pub/art/2011/bcm_nlm/article.pdf) paper. The algorithm has the following input parameters:
+    * ```--input```: input image path
+    * ```--output```: output image path
+    * ```--big_r```: the radius ```r``` of the research window. For each pixel ```p``` of the image, a window of ```(2r + 1) x (2r + 1)``` is scanned around ```p```
+    * ```--patch_r```: the radius ```f``` of the patch, that establishes a neighborhood of ```(2f + 1) x (2f +1) ```. For each pixel ```p``` of the image, its neighborhood is compared to the neighborhood of each pixel ```q``` in the research window around ```p```, in order to compute the euclidean distance
+    * ```--sigma```: standard deviation of the noise contained in the input image. It's used to compute the gaussian weight of each pair of patches
+    * ```--h```: fraction of ```sigma```. An high value of ```--h``` removes all the noise but also all the details of the image
 
 We obtained the following results:
 

@@ -46,7 +46,7 @@ The parameters used for the NLM are the following:
 bin/nlm_denoiser --input out/lowres/16_coffee_720_256.jpg --output out/nlm_denoised_images/denoised_coffee_256.png --patch_r 1 --big_r 10 --h 2.5  --sigma 10
 ```
 
-### Bedroom:
+### Bedroom
 
 This is the case where NLM gets the worst results, since the scene is much more complex than the previous one and contains a lot of details. NLM in this case fails to find similar patches due to the high variance in the image. BCD instead correctly removes most of the noise still preserving the details. 
 

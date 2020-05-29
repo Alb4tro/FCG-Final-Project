@@ -15,8 +15,8 @@ Daniele Passacantilli 1701011
 2. We wrote our implementation of the Non-Local Means Denoiser (NLM) following [this](https://www.ipol.im/pub/art/2011/bcm_nlm/article.pdf) paper. The algorithm has the following input parameters:
     * ```--input```: input image path
     * ```--output```: output image path
-    * ```--big_r```: the radius ```r``` of the research window. For each pixel ```p``` of the image, a window of ```(2r + 1) x (2r + 1)``` is scanned around ```p```
-    * ```--patch_r```: the radius ```f``` of the patch, that establishes a neighborhood of ```(2f + 1) x (2f +1) ```. For each pixel ```p``` of the image, its neighborhood is compared to the neighborhood of each pixel ```q``` in the research window around ```p```, in order to compute the euclidean distance
+    * ```--big_r```: the radius ```r``` of the research window. For each pixel ```p``` of the image, a window of size ```(2r + 1) x (2r + 1)``` is scanned around ```p```
+    * ```--patch_r```: the radius ```f``` of the patch, that establishes a neighborhood of size ```(2f + 1) x (2f +1) ```. For each pixel ```p``` of the image, its neighborhood is compared to the neighborhood of each pixel ```q``` in the research window around ```p```, in order to compute the euclidean distance
     * ```--sigma```: standard deviation of the noise contained in the input image. It's used to compute the gaussian weight of each pair of patches
     * ```--h```: fraction of ```sigma```. An high value of ```--h``` removes all the noise but also all the details of the image
 

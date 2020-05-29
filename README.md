@@ -16,9 +16,9 @@ Daniele Passacantilli 1701011
     * ```--input```: input image path
     * ```--output```: output image path
     * ```--big_r```: the radius ```r``` of the research window. For each pixel ```p``` of the image, a window of size ```(2r + 1) x (2r + 1)``` is scanned around ```p```
-    * ```--patch_r```: the radius ```f``` of the patch, that establishes a neighborhood of size ```(2f + 1) x (2f +1) ```. For each pixel ```p``` of the image, its neighborhood is compared to the neighborhood of each pixel ```q``` in the research window around ```p```, in order to compute the euclidean distance
+    * ```--patch_r```: the radius ```f``` of the patch, that establishes a neighborhood of size ```(2f + 1) x (2f + 1) ```. For each pixel ```p``` of the image, its neighborhood is compared to the neighborhood of each pixel ```q``` in the research window around ```p```, in order to compute the euclidean distance
     * ```--sigma```: standard deviation of the noise contained in the input image. It's used to compute the gaussian weight of each pair of patches
-    * ```--h```: fraction of ```sigma```. An high value of ```--h``` removes all the noise but also all the details of the image
+    * ```--h```: fraction of ```sigma```. An high value of ```h``` removes all the noise but also all the details of the image
 
 We applied both BCD and NLM to the output of the yocto pathtracer on different scenes, obtaining the following results:
 
@@ -65,5 +65,5 @@ bin/nlm_denoiser --input out/lowres/13_bedroom_720_1024.jpg --output out/nlm_den
 The parameters used for the NLM are the following:
 
 ```
-bin/RelWithDebInfo/nlm_denoiser --input out/lowres/04_head_720_64.jpg --output out/nlm_denoised_images/denoised_head_720_64.png --patch_r 1 --big_r 10 --h 2  --sigma 10
+bin/nlm_denoiser --input out/lowres/04_head_720_64.jpg --output out/nlm_denoised_images/denoised_head_720_64.png --patch_r 1 --big_r 10 --h 2  --sigma 10
 ```

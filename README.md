@@ -20,7 +20,7 @@ Daniele Passacantilli 1701011
     * ```--sigma```: standard deviation of the noise contained in the input image. It's used to compute the gaussian weight of each pair of patches
     * ```--h```: fraction of ```sigma```. An high value of ```--h``` removes all the noise but also all the details of the image
 
-We applied both BCD and NLM to the output of the yocto pathtracer, obtaining the following results:
+We applied both BCD and NLM to the output of the yocto pathtracer on different scenes, obtaining the following results:
 
 ### Cornell box
 
@@ -36,7 +36,8 @@ bin/nlm_denoiser --input out/lowres/01_cornellbox_512_256.jpg --output out/nlm_d
 
 ### Coffee
 
-In this image instead, NLM removes more noise than BCD, still preserving most of the details, except for a slight blurring effect on the horizontal lines on top of the coffeepot. This is due to the fact that NLM performs well in images characterized by a lower within variance.
+In this image, NLM removes more noise than BCD, still preserving most of the details, except for a slight blurring effect on the horizontal lines on top of the coffeepot. This is due to the fact that NLM performs well in images characterized by a lower within variance, since for each patch it's easier to find a similar patch inside the respective research window, then performing the adjustment.
+
 ![Image](out/compare_results/coffee.png)
 
 The parameters used for the NLM are the following:
@@ -46,6 +47,8 @@ bin/nlm_denoiser --input out/lowres/16_coffee_720_256.jpg --output out/nlm_denoi
 ```
 
 ### Bedroom:
+
+This is the case where NLM gets the worst results, since the scene is much more complex than the previous one and contains a lot of details. NLM in this case fails to find similar patches due to the high variance in the image. BCD instead correctly removes most of the noise still preserving the details. 
 
 ![Image](out/compare_results/bedroom.png)
 

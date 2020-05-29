@@ -22,9 +22,9 @@ Daniele Passacantilli 1701011
 
 We applied both BCD and NLM to the output of the yocto pathtracer, obtaining the following results:
 
-###Cornell box
+### Cornell box
 
-As we can see, the BCD's approach performs a consistent denoising, both correctly removing the noise and preserving the details, however slighty altering the illumination. Our NLM implementation, instead, succeeds in removing most of the noise but some details are lost, resulting in a slighty blurring effect.
+As we can see, the BCD's approach performs a consistent denoising, both correctly removing the noise and preserving the details, however slighty altering the illumination. Our NLM implementation, instead, succeeds in removing most of the noise but some details are lost, resulting in a slight blurring effect.
 
 ![Image](out/compare_results/cornellbox.png)
 
@@ -34,7 +34,7 @@ The parameters used for the NLM are the following:
 bin/nlm_denoiser --input out/lowres/01_cornellbox_512_256.jpg --output out/nlm_denoised_images/denoised_cornellbox_256.png --patch_r 2 --big_r 10 --h 3  --sigma 5
 ```
 
-###Coffee
+### Coffee
 
 In this image instead, NLM removes more noise than BCD, still preserving most of the details, except for a slight blurring effect on the horizontal lines on top of the coffeepot. This is due to the fact that NLM performs well in images characterized by a lower within variance.
 ![Image](out/compare_results/coffee.png)
@@ -45,7 +45,7 @@ The parameters used for the NLM are the following:
 bin/nlm_denoiser --input out/lowres/16_coffee_720_256.jpg --output out/nlm_denoised_images/denoised_coffee_256.png --patch_r 1 --big_r 10 --h 2.5  --sigma 10
 ```
 
-###Bedroom:
+### Bedroom:
 
 ![Image](out/compare_results/bedroom.png)
 
@@ -55,7 +55,7 @@ The parameters used for the NLM are the following:
 bin/nlm_denoiser --input out/lowres/13_bedroom_720_1024.jpg --output out/nlm_denoised_images/denoised_bedroom_1024.png --patch_r 1 --big_r 60 --h 2  --sigma 10
 ```
 
-###Head
+### Head
 
 ![Image](out/compare_results/head.png)
 

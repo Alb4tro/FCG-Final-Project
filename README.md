@@ -26,7 +26,12 @@ We applied both BCD and NLM to the output of the yocto pathtracer on different s
 
 As we can see, the BCD's approach performs a consistent denoising, both correctly removing the noise and preserving the details, however slighty altering the illumination. Our NLM implementation, instead, succeeds in removing most of the noise but some details are lost, resulting in a slight blurring effect.
 
-![Image](out/compare_results/cornellbox.png)
+![Image](out/compare_results/cornellbox_4.png)
+![Image](out/compare_results/cornellbox_8.png)
+![Image](out/compare_results/cornellbox_16.png)
+![Image](out/compare_results/cornellbox_64.png)
+![Image](out/compare_results/cornellbox_128.png)
+![Image](out/compare_results/cornellbox_256.png)
 
 The parameters used for the NLM are the following:
 
@@ -50,7 +55,17 @@ bin/nlm_denoiser --input out/lowres/16_coffee_720_256.jpg --output out/nlm_denoi
 
 This is the case where NLM gets the worst results, since the scene is much more complex than the previous one and contains a lot of details. NLM in this case fails to find similar patches due to the high variance in the image. BCD instead correctly removes most of the noise still preserving the details. 
 
-![Image](out/compare_results/bedroom.png)
+![Image](out/compare_results/bedroom_4.png)
+
+![Image](out/compare_results/bedroom_8.png)
+
+![Image](out/compare_results/bedroom_16.png)
+
+![Image](out/compare_results/bedroom_64.png)
+
+![Image](out/compare_results/bedroom_128.png)
+
+![Image](out/compare_results/bedroom_256.png)
 
 The parameters used for the NLM are the following:
 

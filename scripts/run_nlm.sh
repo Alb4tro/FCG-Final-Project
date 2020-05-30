@@ -1,3 +1,7 @@
+bin/RelWithDebInfo/nlm_denoiser --input out/lowres/16_coffee_1080_256.jpg --output out/nlm_denoised_images/denoised_coffee_1080_256.png --patch_r 1 --big_r 10 --h 2.5  --sigma 10
+bin/RelWithDebInfo/nlm_denoiser --input out/lowres/05_head1ss_1080_256.jpg --output out/nlm_denoised_images/denoised_head1ss_1080_256.png --patch_r 1 --big_r 10 --h 2  --sigma 10
+
+
 # Bedroom
 
 

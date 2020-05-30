@@ -36,7 +36,7 @@ As we can see, the BCD's approach performs a consistent denoising, both correctl
 The parameters used for the NLM are the following:
 
 ```
-bin/nlm_denoiser --input out/lowres/01_cornellbox_512_256.jpg --output out/nlm_denoised_images/denoised_cornellbox_256.png --patch_r 2 --big_r 10 --h 3  --sigma 5
+--patch_r 2 --big_r 10 --h 3  --sigma 5
 ```
 
 ### Coffee
@@ -48,7 +48,7 @@ In this image, NLM removes more noise than BCD, still preserving most of the det
 The parameters used for the NLM are the following:
 
 ```
-bin/nlm_denoiser --input out/lowres/16_coffee_720_256.jpg --output out/nlm_denoised_images/denoised_coffee_256.png --patch_r 1 --big_r 10 --h 2.5  --sigma 10
+--patch_r 1 --big_r 10 --h 2.5  --sigma 10
 ```
 
 ### Bedroom
@@ -80,7 +80,7 @@ This is the case where NLM gets the worst results, since the scene is much more 
 The parameters used for the NLM are the following:
 
 ```
-bin/nlm_denoiser --input out/lowres/13_bedroom_720_1024.jpg --output out/nlm_denoised_images/denoised_bedroom_1024.png --patch_r 1 --big_r 60 --h 2  --sigma 10
+--patch_r 2 --big_r 10 --h 2  --sigma 10
 ```
 
 ### Head
@@ -90,5 +90,5 @@ bin/nlm_denoiser --input out/lowres/13_bedroom_720_1024.jpg --output out/nlm_den
 The parameters used for the NLM are the following:
 
 ```
-bin/nlm_denoiser --input out/lowres/04_head_720_64.jpg --output out/nlm_denoised_images/denoised_head_720_64.png --patch_r 1 --big_r 10 --h 2  --sigma 10
+--patch_r 1 --big_r 10 --h 2  --sigma 10
 ```

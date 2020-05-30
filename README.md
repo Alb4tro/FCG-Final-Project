@@ -20,7 +20,7 @@ Daniele Passacantilli 1701011
     * ```--sigma```: standard deviation of the noise contained in the input image. It's used to compute the gaussian weight of each pair of patches
     * ```--h```: fraction of ```sigma```. An high value of ```h``` removes all the noise but also all the details of the image
 
-We applied both BCD and NLM to the output of the yocto pathtracer on different scenes, obtaining the following results:
+We applied both BCD and NLM to the output of the yocto pathtracer on different scenes trying several numbers of samples. We obtained the following results:
 
 ### Cornell box
 
@@ -41,8 +41,7 @@ The parameters used for the NLM are the following:
 
 ### Coffee
 
-In this image, NLM removes more noise than BCD, still preserving most of the details, except for a slight blurring effect on the horizontal lines on top of the coffeepot. This is due to the fact that NLM performs well in images characterized by a lower within variance, since for each patch it's easier to find a similar patch inside the respective research window, then performing the adjustment.
-
+In this image, both the algorithms remove most of the noise, still preserving most of the details, except for a slight blurring effect on the horizontal lines on top of the coffeepot while using NLM. The latter is still useful since it's an image characterized by a lower within variance, since for each patch it's easier to find a similar patch inside the respective research window, then performing the adjustment.
 ![Image](out/compare_results/coffee_1080_4.png)
 ![Image](out/compare_results/coffee_1080_8.png)
 ![Image](out/compare_results/coffee_1080_16.png)
@@ -57,7 +56,7 @@ The parameters used for the NLM are the following:
 
 ### Bedroom
 
-This is the case where NLM gets the worst results, since the scene is much more complex than the previous one and contains a lot of details. NLM in this case fails to find similar patches due to the high variance in the image. BCD instead correctly removes most of the noise still preserving the details. 
+This is the case where NLM gets the worst results, since the scene is much more complex than the previous one and contains a lot of details. NLM in this case fails to find similar patches due to the high variance in the image. BCD performs badly with few samples, generating several artifacts, such as the ones over the window. However, increasing the samples up to 256 allows to remove most of the noise in the image.
 
 ![Image](out/compare_results/bedroom_4.png)
 
@@ -89,13 +88,13 @@ The parameters used for the NLM are the following:
 
 ### Head
 
+
 ![Image](out/compare_results/head_1080_4.png)
 ![Image](out/compare_results/head_1080_8.png)
 ![Image](out/compare_results/head_1080_16.png)
 ![Image](out/compare_results/head_1080_64.png)
 ![Image](out/compare_results/head_1080_128.png)
 ![Image](out/compare_results/head_1080_256.png)
-
 The parameters used for the NLM are the following:
 
 ```

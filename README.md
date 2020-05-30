@@ -4,6 +4,8 @@ Alberto Maria Mongardini 1635121
 
 Daniele Passacantilli 1701011
 
+The project is available on Github [Here](https://github.com/Alb4tro/FCG-Final-Project)
+
 ## What we did
 1. We integrated the bayesian collaborative denoising ([BCD](https://github.com/superboubek/bcd)) in Yocto/GL. In order to do that:
     * we put the BCD library in the ```/libs``` directory and edited several CMakeList files inside the BCD's directory tree, since most of them contained absolute paths

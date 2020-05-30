@@ -87,8 +87,7 @@ The parameters used for the NLM are the following:
 ```
 
 ### Head
-
-
+Also for the skin, BCD performs poorly with few samples, improving a lot starting from 64 samples.
 ![Image](out/compare_results/head_1080_4.png)
 ![Image](out/compare_results/head_1080_8.png)
 ![Image](out/compare_results/head_1080_16.png)

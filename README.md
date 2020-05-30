@@ -43,7 +43,29 @@ The parameters used for the NLM are the following:
 
 In this image, NLM removes more noise than BCD, still preserving most of the details, except for a slight blurring effect on the horizontal lines on top of the coffeepot. This is due to the fact that NLM performs well in images characterized by a lower within variance, since for each patch it's easier to find a similar patch inside the respective research window, then performing the adjustment.
 
-![Image](out/compare_results/coffee.png)
+![Image](out/compare_results/coffee_1080_4.png)
+
+---------------------------------------------------------------------------------------------------------------
+
+![Image](out/compare_results/coffee_1080_8.png)
+
+---------------------------------------------------------------------------------------------------------------
+
+![Image](out/compare_results/coffee_1080_16.png)
+
+---------------------------------------------------------------------------------------------------------------
+
+![Image](out/compare_results/coffee_1080_64.png)
+
+---------------------------------------------------------------------------------------------------------------
+
+![Image](out/compare_results/coffee_1080_128.png)
+
+---------------------------------------------------------------------------------------------------------------
+
+![Image](out/compare_results/coffee_1080_256.png)
+
+---------------------------------------------------------------------------------------------------------------
 
 The parameters used for the NLM are the following:
 
@@ -85,10 +107,32 @@ The parameters used for the NLM are the following:
 
 ### Head
 
-![Image](out/compare_results/head.png)
+![Image](out/compare_results/head_1080_4.png)
+
+---------------------------------------------------------------------------------------------------------------
+
+![Image](out/compare_results/head_1080_8.png)
+
+---------------------------------------------------------------------------------------------------------------
+
+![Image](out/compare_results/head_1080_16.png)
+
+---------------------------------------------------------------------------------------------------------------
+
+![Image](out/compare_results/head_1080_64.png)
+
+---------------------------------------------------------------------------------------------------------------
+
+![Image](out/compare_results/head_1080_128.png)
+
+---------------------------------------------------------------------------------------------------------------
+
+![Image](out/compare_results/head_1080_256.png)
+
+---------------------------------------------------------------------------------------------------------------
 
 The parameters used for the NLM are the following:
 
 ```
---patch_r 1 --big_r 10 --h 2  --sigma 10
+--patch_r 2 --big_r 10 --h 2  --sigma 20
 ```

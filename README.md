@@ -4,7 +4,7 @@ Alberto Maria Mongardini 1635121
 
 Daniele Passacantilli 1701011
 
-The project is available on Github [Here](https://github.com/Alb4tro/FCG-Final-Project)
+The project is available on Github [here](https://github.com/Alb4tro/FCG-Final-Project)
 
 ## What we did
 1. We integrated the bayesian collaborative denoising ([BCD](https://github.com/superboubek/bcd)) in Yocto/GL. In order to do that:
@@ -22,7 +22,7 @@ The project is available on Github [Here](https://github.com/Alb4tro/FCG-Final-P
     * ```--sigma```: standard deviation of the noise contained in the input image. It's used to compute the gaussian weight of each pair of patches
     * ```--h```: fraction of ```sigma```. An high value of ```h``` removes all the noise but also all the details of the image
 
-We applied both BCD and NLM to the output of the yocto pathtracer on different scenes trying several numbers of samples. We obtained the following results:
+We applied both BCD and NLM to the output of the yocto pathtracer on different scenes trying several numbers of samples. We obtained the following results. All the images are available inside the ```/out``` folder.
 
 ### Cornell box
 

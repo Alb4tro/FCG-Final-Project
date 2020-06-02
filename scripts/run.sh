@@ -1,9 +1,5 @@
 #Bedroom
 
-./bin/RelWithDebInfo/yscenetrace tests/13_bedroom/bedroom.json -o out/lowres/13_bedroom_1080_1024.jpg -t path -s 1024 -r 1080
-./bin/RelWithDebInfo/yimagedenoise out/file.raw -o out/bcd_denoised_images/13_bedroom_1080_1024
-rm out/file.raw
-
 ./bin/RelWithDebInfo/yscenetrace tests/13_bedroom/bedroom.json -o out/lowres/13_bedroom_1080_4.jpg -t path -s 4 -r 1080
 ./bin/RelWithDebInfo/yimagedenoise out/file.raw -o out/bcd_denoised_images/13_bedroom_1080_4
 rm out/file.raw
@@ -28,8 +24,8 @@ rm out/file.raw
 ./bin/RelWithDebInfo/yimagedenoise out/file.raw -o out/bcd_denoised_images/13_bedroom_1080_256
 rm out/file.raw
 
-./bin/RelWithDebInfo/yscenetrace tests/13_bedroom/bedroom.json -o out/lowres/13_bedroom_720_1024.jpg -t path -s 1024 -r 720
-./bin/RelWithDebInfo/yimagedenoise out/file.raw -o out/bcd_denoised_images/13_bedroom_720_1024
+./bin/RelWithDebInfo/yscenetrace tests/13_bedroom/bedroom.json -o out/lowres/13_bedroom_720_4096.jpg -t path -s 4096 -r 720
+./bin/RelWithDebInfo/yimagedenoise out/file.raw -o out/bcd_denoised_images/13_bedroom_720_4096
 rm out/file.raw
 
 # Cornellbox

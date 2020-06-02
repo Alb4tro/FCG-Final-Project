@@ -89,15 +89,15 @@ The parameters used for the NLM are the following:
 ```
 --patch_r 2 --big_r 10 --h 2  --sigma 10
 ```
-#### Extra image with 720 resolution and 1024 samples
+#### Extra image with 720 resolution and 4096 samples
 
 ###### Noisy Image:
 
-![Image](out/lowres/13_bedroom_720_1024.jpg)
+![Image](out/lowres/13_bedroom_720_4096.jpg)
 
 ##### Denoised image by BCD:
 
-![Image](out/bcd_denoised_images/13_bedroom_720_1024_denoised.png)
+![Image](out/bcd_denoised_images/13_bedroom_720_4096_denoised.png)
 
 ### Head
 Also for the skin, BCD performs poorly with few samples, improving a lot starting from 64 samples.

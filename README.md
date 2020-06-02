@@ -82,6 +82,17 @@ This is the case where NLM gets the worst results, since the scene is much more 
 
 ![Image](out/compare_results/bedroom_256.png)
 
+---------------------------------------------------------------------------------------------------------------
+EXTRA with 720 resolution and 1024 samples
+
+Noisy Image:
+
+![Image](out/lowres/13_bedroom_720_1024.jpg)
+
+Denoised image by BCD:
+
+![Image](out/bcd_denoised_images/13_bedroom_720_1024_denoised.png)
+
 The parameters used for the NLM are the following:
 
 ```

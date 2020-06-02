@@ -279,18 +279,7 @@ int main(int argc, const char* argv[]) {
   int x = state->render.size().x;
   int y = state->render.size().y; 
 
-  auto vec = std::vector<float>{};
-  for(int j = 0; j <  y ; j++){
-    for(int i = 0; i < x; i++){
-      for(int s = 0; s < params.samples; s++){
-        auto p = state->samples[s][{i,j}];
-        vec.push_back(p.x);
-        vec.push_back(p.y);
-        vec.push_back(p.z);
-        vec.push_back(p.w);
-      } 
-    }
-  }
+  
 
   RawFileHeader header = {(int32_t) 1,(int32_t) x,(int32_t) y, (int32_t)  params.samples, (int32_t)  4};
 
@@ -300,7 +289,22 @@ int main(int argc, const char* argv[]) {
 			cli::print_fatal("Error: cannot write output file!");
 	}
   binaryFile.write((char*)&header, sizeof(header));
-  binaryFile.write((char*)&vec[0], vec.size() * sizeof(float));
+
+  
+  for(int j = 0; j <  y ; j++){
+    for(int i = 0; i < x; i++){
+      auto vec = std::vector<float>{};
+      for(int s = 0; s < params.samples; s++){
+        auto p = state->samples[s][{i,j}];
+        vec.push_back(p.x);
+        vec.push_back(p.y);
+        vec.push_back(p.z);
+        vec.push_back(p.w);
+      } 
+      binaryFile.write((char*)&vec[0], vec.size() * sizeof(float));
+    }
+  }
+  
   binaryFile.close();
 
   // done
